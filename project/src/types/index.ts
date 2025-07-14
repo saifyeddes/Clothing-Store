@@ -60,3 +60,14 @@ export interface OrderItem {
   quantity: number;
   price: number;
 }
+
+export type Review = {
+  id: string;
+  user_id: string;
+  user: User;
+  product_id: string;
+  product: Product;
+  rating: number;
+  comment: string;
+  created_at: string;
+};

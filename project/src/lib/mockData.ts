@@ -1,4 +1,4 @@
-import type { Product, Category, User } from '../types';
+import type { Product, Category, User, Order, Review } from '../types';
 
 export const mockCategories: Category[] = [
   {
@@ -219,3 +219,103 @@ export const mockUser: User = {
   role: 'customer',
   created_at: '2025-01-01T00:00:00Z'
 };
+
+export const mockAdmins: User[] = [
+  {
+    id: 'admin-1',
+    email: 'super.admin@example.com',
+    full_name: 'Super Admin',
+    role: 'super_admin',
+    created_at: '2025-01-01T00:00:00Z'
+  },
+  {
+    id: 'admin-2',
+    email: 'admin.user@example.com',
+    full_name: 'Admin User',
+    role: 'admin',
+    created_at: '2025-01-01T00:00:00Z'
+  },
+  {
+    id: 'admin-3',
+    email: 'another.admin@example.com',
+    full_name: 'Another Admin',
+    role: 'admin',
+    created_at: '2025-01-01T00:00:00Z'
+  },
+];
+
+export const mockReviews: Review[] = [
+  {
+    id: 'review-1',
+    user_id: '1',
+    user: mockUser,
+    product_id: '1',
+    product: mockProducts[0],
+    rating: 5,
+    comment: 'Excellent produit, très confortable et de bonne qualité. Je recommande vivement !',
+    created_at: '2025-07-11T09:00:00Z',
+  },
+  {
+    id: 'review-2',
+    user_id: '1',
+    user: mockUser,
+    product_id: '5',
+    product: mockProducts[4],
+    rating: 4,
+    comment: 'Jolie couleur et tissu agréable. La taille est un peu juste, je conseillerais de prendre une taille au-dessus.',
+    created_at: '2025-07-13T15:20:00Z',
+  },
+  {
+    id: 'review-3',
+    user_id: '1',
+    user: mockUser,
+    product_id: '9',
+    product: mockProducts[8],
+    rating: 5,
+    comment: 'Adorable et de très bonne qualité. Mon fils adore !',
+    created_at: '2025-07-14T11:45:00Z',
+  },
+];
+
+export const mockOrders: Order[] = [
+  {
+    id: 'ORD-001',
+    user_id: '1',
+    user: mockUser,
+    items: [
+      { id: 'item-1', order_id: 'ORD-001', product_id: '1', product: mockProducts[0], size: 'M', color: 'Noir', quantity: 1, price: 35.000 },
+      { id: 'item-2', order_id: 'ORD-001', product_id: '5', product: mockProducts[4], size: 'S', color: 'Rose', quantity: 1, price: 32.000 },
+    ],
+    total_amount: 67.000,
+    status: 'delivered',
+    shipping_address: '123 Rue de la Liberté, Tunis, Tunisie',
+    phone: '+216 12 345 678',
+    created_at: '2025-07-10T10:30:00Z',
+  },
+  {
+    id: 'ORD-002',
+    user_id: '1',
+    user: mockUser,
+    items: [
+      { id: 'item-3', order_id: 'ORD-002', product_id: '2', product: mockProducts[1], size: 'L', color: 'Blanc', quantity: 2, price: 42.000 },
+    ],
+    total_amount: 84.000,
+    status: 'shipped',
+    shipping_address: '456 Avenue Habib Bourguiba, Sousse, Tunisie',
+    phone: '+216 98 765 432',
+    created_at: '2025-07-12T14:00:00Z',
+  },
+  {
+    id: 'ORD-003',
+    user_id: '1',
+    user: mockUser,
+    items: [
+      { id: 'item-4', order_id: 'ORD-003', product_id: '9', product: mockProducts[8], size: '4-5 ans', color: 'Rouge', quantity: 1, price: 22.000 },
+    ],
+    total_amount: 22.000,
+    status: 'pending',
+    shipping_address: '789 Boulevard de l\'Environnement, Sfax, Tunisie',
+    phone: '+216 22 111 333',
+    created_at: '2025-07-14T09:15:00Z',
+  },
+];

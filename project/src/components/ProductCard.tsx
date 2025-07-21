@@ -41,7 +41,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, onAddToCart }) => {
   };
 
   return (
-    <div className="group relative bg-white rounded-lg shadow-md overflow-hidden hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
+    <div className="group relative bg-white rounded-3xl shadow-sm overflow-hidden hover:shadow-md transition-all duration-300 transform hover:-translate-y-1">
       {/* Image */}
       <div className="aspect-[3/4] overflow-hidden bg-gray-100">
         <Link to={`/product/${product.id}`} className="block w-full h-full" aria-label={`Voir les détails pour ${product.name}`}>
@@ -67,19 +67,19 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, onAddToCart }) => {
       </div>
 
       {/* Badges */}
-      <div className="absolute top-2 left-2 flex flex-col space-y-1">
+      <div className="absolute top-3 left-3 flex flex-col space-y-1">
         {product.is_featured && (
-          <span className="bg-yellow-600 text-white text-xs font-medium px-2 py-1 rounded">
+          <span className="bg-yellow-600 text-white text-xs font-medium text-center px-2 py-1 rounded-lg">
             Nouveau
           </span>
         )}
         {product.stock_quantity < 5 && product.stock_quantity > 0 && (
-          <span className="bg-red-500 text-white text-xs font-medium px-2 py-1 rounded">
+          <span className="bg-red-500 text-white text-xs font-medium text-center px-2 py-1 rounded-lg">
             Stock Limité
           </span>
         )}
         {product.stock_quantity === 0 && (
-          <span className="bg-gray-500 text-white text-xs font-medium px-2 py-1 rounded">
+          <span className="bg-gray-500 text-white text-xs font-medium text-center px-2 py-1 rounded-lg">
             Épuisé
           </span>
         )}

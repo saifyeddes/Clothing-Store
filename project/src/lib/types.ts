@@ -1,11 +1,3 @@
-export interface User {
-  id: string;
-  email: string;
-  full_name: string;
-  role: 'customer' | 'admin' | 'super_admin';
-  created_at: string;
-}
-
 export interface Category {
   id: string;
   name: string;
@@ -19,34 +11,21 @@ export interface Product {
   description: string;
   price: number;
   category_id: string;
-  category?: Category;
+  category: Category;
   images: string[];
   sizes: string[];
   colors: string[];
-  gender: 'homme' | 'femme' | 'unisexe';
+  gender: string;
   stock_quantity: number;
   is_featured: boolean;
   created_at: string;
 }
 
-export interface CartItem {
+export interface User {
   id: string;
-  product_id: string;
-  product: Product;
-  size: string;
-  color: string;
-  quantity: number;
-}
-
-export interface Order {
-  id: string;
-  user_id: string;
-  user?: User;
-  items: OrderItem[];
-  total_amount: number;
-  status: 'pending' | 'confirmed' | 'shipped' | 'delivered' | 'cancelled';
-  shipping_address: string;
-  phone: string;
+  email: string;
+  full_name: string;
+  role: string;
   created_at: string;
 }
 
@@ -61,7 +40,19 @@ export interface OrderItem {
   price: number;
 }
 
-export type Review = {
+export interface Order {
+  id: string;
+  user_id: string;
+  user: User;
+  items: OrderItem[];
+  total_amount: number;
+  status: string;
+  shipping_address: string;
+  phone: string;
+  created_at: string;
+}
+
+export interface Review {
   id: string;
   user_id: string;
   user: User;
@@ -70,7 +61,7 @@ export type Review = {
   rating: number;
   comment: string;
   created_at: string;
-};
+}
 
 export interface Filter {
   id: string;

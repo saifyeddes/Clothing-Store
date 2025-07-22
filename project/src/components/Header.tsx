@@ -154,12 +154,12 @@ const Header: React.FC = () => {
             */}
 
             {/* Mobile menu button */}
-            <button
+            {/* <button
               onClick={() => setIsMenuOpen(!isMenuOpen)}
               className="md:hidden p-2 text-black transition-colors"
             >
               {isMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
-            </button>
+            </button> */}
           </div>
         </div>
 

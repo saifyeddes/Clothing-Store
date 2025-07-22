@@ -225,7 +225,7 @@ const Home: React.FC = () => {
 
           <div className="text-center">
             <Link
-              to="/products"
+              to="/category/all"
               className="inline-flex items-center bg-yellow-600 text-white px-8 py-3 rounded-lg text-lg font-semibold hover:bg-yellow-700 transition-colors"
             >
               Voir tous les t-shirts

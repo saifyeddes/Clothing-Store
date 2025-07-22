@@ -1,13 +1,18 @@
-import { useState, useMemo } from 'react';
-import { useParams } from 'react-router-dom';
-import { SlidersHorizontal, X, Filter as FilterIcon } from 'lucide-react';
+import { useMemo, useState, useEffect } from 'react';
+import { useParams, useSearchParams, useNavigate } from 'react-router-dom';
+import { X } from 'lucide-react';
+import { SlidersHorizontal, Filter as FilterIcon } from 'lucide-react';
 import { mockProducts } from '../lib/mockData';
 import ProductCard from '../components/ProductCard';
 import { useCart } from '../contexts/CartContext';
 import { Product } from '../types';
 
 const CategoryPage: React.FC = () => {
+  const navigate = useNavigate();
   const { gender } = useParams<{ gender: string }>();
+  const [searchParams] = useSearchParams();
+  const searchQuery = searchParams.get('search')?.toLowerCase() || '';
+  
   const { addToCart } = useCart();
   
   const [sortBy, setSortBy] = useState('name');
@@ -16,25 +21,49 @@ const CategoryPage: React.FC = () => {
   const [selectedSizes, setSelectedSizes] = useState<string[]>([]);
   const [isFilterOpen, setIsFilterOpen] = useState(false);
 
-  // Filter products by gender
-  const filteredProducts = mockProducts.filter(product => {
-    if (gender === 'homme') return product.gender === 'homme';
-    if (gender === 'femme') return product.gender === 'femme';
-    if (gender === 'enfant') return product.gender === 'unisexe'; // Assuming kids products are unisex
-    return true;
-  });
+
+  // Mettre à jour l'état des filtres lorsque les paramètres d'URL changent
+  useEffect(() => {
+    // Cette fonction est appelée lorsque les paramètres d'URL changent
+    // Pas besoin de gérer searchInput ici car la recherche est maintenant gérée dans le Header
+  }, [searchQuery]);
+
+  // Filter products by gender and search query
+  const filteredProducts = useMemo(() => {
+    return mockProducts.filter(product => {
+      // Apply gender filter
+      if (gender === 'homme' && product.gender !== 'homme') return false;
+      if (gender === 'femme' && product.gender !== 'femme') return false;
+      if (gender === 'enfant' && product.gender !== 'unisexe') return false;
+      
+      // Apply search query filter if present
+      if (searchQuery) {
+        const searchInName = product.name.toLowerCase().includes(searchQuery);
+        const searchInDescription = product.description.toLowerCase().includes(searchQuery);
+        const searchInColors = product.colors.some(color => 
+          color.toLowerCase().includes(searchQuery)
+        );
+        return searchInName || searchInDescription || searchInColors;
+      }
+      
+      return true;
+    });
+  }, [gender, searchQuery]);
 
   // Apply additional filters
-  const finalProducts = filteredProducts.filter(product => {
-    const priceInRange = product.price >= priceRange[0] && product.price <= priceRange[1];
-    const colorMatch = selectedColors.length === 0 || product.colors.some(color => selectedColors.includes(color));
-    const sizeMatch = selectedSizes.length === 0 || product.sizes.some(size => selectedSizes.includes(size));
-    
-    return priceInRange && colorMatch && sizeMatch;
-  });
+  const finalProducts = useMemo(() => {
+    return filteredProducts.filter(product => {
+      const priceInRange = product.price >= priceRange[0] && product.price <= priceRange[1];
+      const colorMatch = selectedColors.length === 0 || product.colors.some(color => selectedColors.includes(color));
+      const sizeMatch = selectedSizes.length === 0 || product.sizes.some(size => selectedSizes.includes(size));
+      
+      return priceInRange && colorMatch && sizeMatch;
+    });
+  }, [filteredProducts, priceRange, selectedColors, selectedSizes]);
 
   // Sort products
-  const sortedProducts = [...finalProducts].sort((a, b) => {
+  const sortedProducts = useMemo(() => {
+    return [...finalProducts].sort((a, b) => {
     switch (sortBy) {
       case 'price-low':
         return a.price - b.price;
@@ -42,10 +71,11 @@ const CategoryPage: React.FC = () => {
         return b.price - a.price;
       case 'name':
         return a.name.localeCompare(b.name);
-      default:
-        return 0;
-    }
-  });
+        default:
+          return 0;
+      }
+    });
+  }, [finalProducts, sortBy]);
 
   const handleQuickAddToCart = (product: Product) => {
     const defaultSize = product.sizes[0];
@@ -55,6 +85,9 @@ const CategoryPage: React.FC = () => {
   };
 
   const getCategoryTitle = () => {
+    if (searchQuery) {
+      return `Résultats pour "${searchQuery}"`;
+    }
     switch (gender) {
       case 'homme':
         return 'T-Shirts Homme';
@@ -132,6 +165,24 @@ const CategoryPage: React.FC = () => {
             </p>
           </div>
         </div>
+        
+        {/* Affichage des résultats de recherche */}
+        {searchQuery && (
+          <div className="mb-6 max-w-3xl mx-auto px-4">
+            <div className="flex items-center justify-between bg-gray-50 rounded-lg p-3">
+              <div className="text-sm text-gray-700">
+                <span className="font-medium">{finalProducts.length}</span> résultat{finalProducts.length !== 1 ? 's' : ''} pour "<span className="text-yellow-600 font-medium">{searchQuery}</span>"
+              </div>
+              <button 
+                onClick={() => navigate('/category/all')}
+                className="text-sm text-yellow-600 hover:text-yellow-700 font-medium flex items-center transition-colors"
+              >
+                <X className="h-4 w-4 mr-1" />
+                Réinitialiser
+              </button>
+            </div>
+          </div>
+        )}
 
         <div className="w-full">
           {/* Products Grid */}

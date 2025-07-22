@@ -3,26 +3,26 @@ import type { Product, Category, User, Order, Review } from '../types';
 export const mockCategories: Category[] = [
   {
     id: '1',
-    name: 'T-Shirts Homme',
-    image_url: 'https://images.pexels.com/photos/1183266/pexels-photo-1183266.jpeg',
+    name: 'T-Shirts Unisexes',
+    image_url: 'https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1180&q=80',
     created_at: '2025-01-01T00:00:00Z'
   },
   {
     id: '2',
-    name: 'T-Shirts Femme',
-    image_url: 'https://images.pexels.com/photos/1036622/pexels-photo-1036622.jpeg',
+    name: 'Sweats à Capuche',
+    image_url: 'https://images.unsplash.com/photo-1591047139829-d91aecb6caea?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1076&q=80',
     created_at: '2025-01-01T00:00:00Z'
   },
   {
     id: '3',
-    name: 'T-Shirts Enfant',
-    image_url: 'https://images.pexels.com/photos/1620760/pexels-photo-1620760.jpeg',
+    name: 'Accessoires',
+    image_url: 'https://images.unsplash.com/photo-1515886653613-0340e7db5b3f?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1170&q=80',
     created_at: '2025-01-01T00:00:00Z'
   }
 ];
 
 export const mockProducts: Product[] = [
-  // T-Shirts Homme
+  // T-Shirts Unisexes
   {
     id: '1',
     name: 'T-Shirt Classique Homme Noir',

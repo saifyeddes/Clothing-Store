@@ -1,14 +1,48 @@
 import React, { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import { Search, ShoppingCart, Menu, X } from 'lucide-react';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { ShoppingCart, Search, X } from 'lucide-react';
 import { useCart } from '../contexts/CartContext';
 
 const Header: React.FC = () => {
   const { totalItems } = useCart();
+  const location = useLocation();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [searchQuery, setSearchQuery] = useState('');
-  const navigate = useNavigate();
   const [isScrolled, setIsScrolled] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const searchTimeoutRef = React.useRef<NodeJS.Timeout>();
+  const navigate = useNavigate();
+
+  // Vérifier si on est sur une page qui doit afficher la barre de recherche
+  const shouldShowSearch = ['/', '/category'].some(path => 
+    location.pathname.startsWith(path)
+  );
+
+  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const query = e.target.value.toLowerCase();
+    setSearchQuery(query);
+    
+    // Annuler le délai précédent
+    if (searchTimeoutRef.current) {
+      clearTimeout(searchTimeoutRef.current);
+    }
+    
+    // Délai avant d'exécuter la recherche
+    searchTimeoutRef.current = setTimeout(() => {
+      if (query.trim()) {
+        // Créer un paramètre de recherche pour le nom, la description et les couleurs
+        navigate(`/category/all?search=${encodeURIComponent(query)}`);
+      } else if (window.location.search) {
+        navigate('/category/all');
+      }
+    }, 300);
+  };
+
+  const clearSearch = () => {
+    setSearchQuery('');
+    if (window.location.pathname.startsWith('/category')) {
+      navigate('/category/all');
+    }
+  };
 
   React.useEffect(() => {
     const handleScroll = () => {
@@ -18,13 +52,7 @@ const Header: React.FC = () => {
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
-  const handleSearch = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (searchQuery.trim()) {
-      navigate(`/search?q=${encodeURIComponent(searchQuery)}`);
-      setSearchQuery('');
-    }
-  };
+
 
   /*
   const handleSignOut = async () => {
@@ -80,26 +108,37 @@ const Header: React.FC = () => {
             </Link>
           </nav> */}
 
-          {/* Search Bar */}
-          <form onSubmit={handleSearch} className="hidden md:flex items-center flex-1 max-w-md mx-8">
-            <div className="relative w-full">
-              <input
-                type="text"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Rechercher des produits..."
-                className={`w-full pl-4 pr-10 py-2 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-transparent transition-colors text-black placeholder-gray-700 ${
-                  isScrolled ? 'bg-gray-100' : 'bg-white/90'
-                }`}
-              />
-              <button
-                type="submit"
-                className="absolute right-2 top-1/2 transform -translate-y-1/2 text-black hover:text-yellow-600 transition-colors"
-              >
-                <Search className="h-5 w-5" />
-              </button>
+          {/* Barre de recherche (uniquement sur Home et Category) */}
+          {shouldShowSearch && (
+            <div className="hidden md:flex items-center flex-1 max-w-2xl mx-4">
+              <div className="relative w-full">
+                <input
+                  type="text"
+                  value={searchQuery}
+                  onChange={handleSearchChange}
+                  onFocus={(e) => e.target.select()}
+                  onKeyDown={(e) => e.key === 'Escape' && e.currentTarget.blur()}
+                  placeholder="Rechercher des produits..."
+                  className="w-full pl-5 pr-10 py-2.5 rounded-full border-2 border-gray-200 focus:ring-2 focus:ring-yellow-400 focus:border-yellow-400 focus:border-opacity-50 focus:outline-none transition-all duration-200 text-gray-800 placeholder-gray-400 bg-white shadow-sm hover:shadow-md"
+                  aria-label="Rechercher des produits"
+                />
+                {searchQuery ? (
+                  <button
+                    onClick={clearSearch}
+                    className="absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors p-1"
+                    aria-label="Effacer la recherche"
+                  >
+                    <X className="h-5 w-5" />
+                  </button>
+                ) : (
+                  <div className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400">
+                    <Search className="h-5 w-5" />
+                  </div>
+                )}
+              </div>
             </div>
-          </form>
+          )}
+          {!shouldShowSearch && <div className="flex-1"></div>}
 
           {/* Right side icons */}
           <div className="flex items-center space-x-4">
@@ -154,12 +193,12 @@ const Header: React.FC = () => {
             */}
 
             {/* Mobile menu button */}
-            {/* <button
+            <button
               onClick={() => setIsMenuOpen(!isMenuOpen)}
               className="md:hidden p-2 text-black transition-colors"
             >
-              {isMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
-            </button> */}
+              {isMenuOpen ? '✕' : '☰'}
+            </button>
           </div>
         </div>
 
@@ -167,23 +206,6 @@ const Header: React.FC = () => {
         {isMenuOpen && (
           <div className="md:hidden bg-white border-t">
             <div className="px-2 pt-2 pb-3 space-y-1">
-              <form onSubmit={handleSearch} className="mb-4">
-                <div className="relative">
-                  <input
-                    type="text"
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    placeholder="Rechercher..."
-                    className="w-full pl-4 pr-10 py-2 border border-gray-300 rounded-lg"
-                  />
-                  <button
-                    type="submit"
-                    className="absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-400"
-                  >
-                    <Search className="h-5 w-5" />
-                  </button>
-                </div>
-              </form>
               <Link
                 to="/category/homme"
                 className="block px-3 py-2 text-gray-700 hover:bg-gray-100 rounded-md"
@@ -199,18 +221,11 @@ const Header: React.FC = () => {
                 Femme
               </Link>
               <Link
-                to="/category/unisexe"
+                to="/category/enfant"
                 className="block px-3 py-2 text-gray-700 hover:bg-gray-100 rounded-md"
                 onClick={() => setIsMenuOpen(false)}
               >
-                Unisexe
-              </Link>
-              <Link
-                to="/featured"
-                className="block px-3 py-2 text-gray-700 hover:bg-gray-100 rounded-md"
-                onClick={() => setIsMenuOpen(false)}
-              >
-                Nouveautés
+                Enfant
               </Link>
             </div>
           </div>

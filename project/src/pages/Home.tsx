@@ -1,23 +1,55 @@
-import React from 'react';
-import { Link } from 'react-router-dom';
-import { ArrowRight, TrendingUp, Users, ShoppingBag } from 'lucide-react';
-import { mockProducts, mockCategories } from '../lib/mockData';
+import React, { useEffect, useState } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
+import { ArrowRight } from 'lucide-react';
+import { mockProducts } from '../lib/mockData';
 import ProductCard from '../components/ProductCard';
 import Testimonials from '../components/Testimonials';
 import { useCart } from '../contexts/CartContext';
 import type { Product } from '../types';
 
 
+// 10 high-quality fashion images for the carousel
 const heroImages = [
-  'https://images.pexels.com/photos/1926769/pexels-photo-1926769.jpeg',
-  'https://images.pexels.com/photos/994523/pexels-photo-994523.jpeg',
-  'https://images.pexels.com/photos/1152994/pexels-photo-1152994.jpeg',
-  'https://images.pexels.com/photos/3768005/pexels-photo-3768005.jpeg',
+  'https://images.unsplash.com/photo-1491553895911-0055ec6402bf?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2070&q=80',
+  'https://images.unsplash.com/photo-1523381210434-271e8be1f52b?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2070&q=80',
+  'https://images.unsplash.com/photo-1489987707025-afc232f7ea0f?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2070&q=80',
+  'https://images.unsplash.com/photo-1520367445093-50dc08a59d9d?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2070&q=80',
+  'https://images.unsplash.com/photo-1525507119028-ed4c629a60a3?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2070&q=80',
+  'https://images.unsplash.com/photo-1485462537746-965f33f7b6a4?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2070&q=80',
+  'https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2070&q=80',
+  'https://images.unsplash.com/photo-1490481651871-ab68de25d43d?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2070&q=80',
+  'https://images.unsplash.com/photo-1487412947144-9f3e969f3278?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2070&q=80',
+  'https://images.unsplash.com/photo-1529139574466-a303027c1d8b?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2070&q=80'
 ];
 
 const Home: React.FC = () => {
   const { addToCart } = useCart();
+  const navigate = useNavigate();
+  const [searchQuery, setSearchQuery] = useState('');
+  const [currentImageIndex, setCurrentImageIndex] = useState(0);
+  const [isPaused, setIsPaused] = useState(false);
   const featuredProducts = mockProducts.filter((product) => product.is_featured);
+
+  // Auto-advance carousel
+  useEffect(() => {
+    if (isPaused) return;
+    
+    const timer = setInterval(() => {
+      setCurrentImageIndex((prevIndex) =>
+        prevIndex === heroImages.length - 1 ? 0 : prevIndex + 1
+      );
+    }, 2000); // Change image every 2 seconds
+    
+    return () => clearInterval(timer);
+  }, [isPaused]);
+
+  const handleSearch = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (searchQuery.trim()) {
+      navigate(`/category/all?search=${encodeURIComponent(searchQuery.trim())}`);
+      setSearchQuery('');
+    }
+  };
 
   const handleQuickAddToCart = (product: Product) => {
     const defaultSize = product.sizes[0];
@@ -25,30 +57,29 @@ const Home: React.FC = () => {
     addToCart(product, defaultSize, defaultColor, 1);
     alert('Produit ajouté au panier !');
   };
-  const [currentImageIndex, setCurrentImageIndex] = React.useState(0);
 
-  React.useEffect(() => {
-    const timer = setInterval(() => {
-      setCurrentImageIndex((prevIndex) =>
-        prevIndex === heroImages.length - 1 ? 0 : prevIndex + 1
-      );
-    }, 2000); // Change image every 2 seconds as requested
-    return () => clearInterval(timer);
-  }, []);
+  const goToSlide = (index: number) => {
+    setCurrentImageIndex(index);
+  };
 
 
   return (
     <div className="min-h-screen">
-      {/* Hero Section */}
-      <section className="relative h-screen flex items-center justify-center bg-black overflow-hidden -mt-16">
+      {/* Hero Section with Carousel */}
+      <section 
+        className="relative h-screen flex items-center justify-center bg-black overflow-hidden -mt-16"
+        onMouseEnter={() => setIsPaused(true)}
+        onMouseLeave={() => setIsPaused(false)}
+      >
         {/* Background Images Carousel */}
         {heroImages.map((image, index) => (
           <div
             key={index}
-            className="absolute inset-0 bg-cover bg-center transition-opacity duration-1000 ease-in-out"
+            className={`absolute inset-0 bg-cover bg-center transition-all duration-1000 ease-in-out ${
+              index === currentImageIndex ? 'opacity-100' : 'opacity-0'
+            }`}
             style={{
               backgroundImage: `url(${image})`,
-              opacity: index === currentImageIndex ? 1 : 0,
               transform: 'scale(1.05)',
               filter: 'brightness(0.7) contrast(1.1)',
             }}
@@ -57,10 +88,24 @@ const Home: React.FC = () => {
 
         <div className="absolute inset-0 bg-black bg-opacity-40"></div>
 
-        {/* Animated overlay patterns */}
-        <div className="absolute inset-0 opacity-20">
-          <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-r from-yellow-600/20 via-transparent to-yellow-600/20 animate-pulse"></div>
-          <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-b from-transparent via-yellow-600/10 to-transparent"></div>
+  
+
+        {/* Navigation Dots */}
+        <div className="absolute bottom-8 left-0 right-0 z-20">
+          <div className="flex justify-center space-x-2">
+            {heroImages.map((_, index) => (
+              <button
+                key={index}
+                onClick={() => goToSlide(index)}
+                className={`w-3 h-3 rounded-full transition-all ${
+                  index === currentImageIndex 
+                    ? 'w-8 bg-yellow-500' 
+                    : 'bg-white/50 hover:bg-white/70'
+                }`}
+                aria-label={`Aller à la diapositive ${index + 1}`}
+              />
+            ))}
+          </div>
         </div>
 
         <div className="relative z-10 text-center text-white px-4 max-w-6xl mx-auto">
@@ -80,14 +125,11 @@ const Home: React.FC = () => {
           {/* Slogan principal */}
           <div className="mb-8">
             <p className="text-2xl md:text-4xl font-bold mb-4 text-gray-100 drop-shadow-lg">
-              Votre Boutique T-Shirts Premium
+              Votre Boutique T-Shirts Unisexes
             </p>
             <p className="text-lg md:text-xl text-gray-300 max-w-3xl mx-auto leading-relaxed">
-              Découvrez notre collection exclusive de t-shirts de qualité
-              supérieure pour
-              <span className="text-yellow-400 font-semibold"> Homme</span>,
-              <span className="text-pink-400 font-semibold"> Femme</span> &{' '}
-              <span className="text-blue-400 font-semibold"> Enfant</span>
+              Découvrez notre collection exclusive de t-shirts unisexes de qualité
+              supérieure, conçus pour s'adapter à tous les styles
             </p>
           </div>
 

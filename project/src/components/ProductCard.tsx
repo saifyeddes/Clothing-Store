@@ -1,7 +1,9 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { ShoppingCart } from 'lucide-react';
+import { ShoppingCart, Heart as HeartIcon, HeartOff as HeartOffIcon } from 'lucide-react';
 import type { Product } from '../types';
+import { useFavorites } from '../contexts/FavoritesContext';
+import { showToast } from './ToastNotification';
 
 interface ProductCardProps {
   product: Product;
@@ -9,6 +11,35 @@ interface ProductCardProps {
 }
 
 const ProductCard: React.FC<ProductCardProps> = ({ product, onAddToCart }) => {
+  const { isFavorite, addToFavorites, removeFromFavorites } = useFavorites();
+  const [isFavorited, setIsFavorited] = useState(false);
+  const [isAnimating, setIsAnimating] = useState(false);
+
+  // Check if product is in favorites on component mount
+  useEffect(() => {
+    setIsFavorited(isFavorite(product.id));
+  }, [product.id, isFavorite]);
+
+  const handleFavoriteClick = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    setIsAnimating(true);
+    
+    if (isFavorited) {
+      removeFromFavorites(product.id);
+      showToast('Produit retiré des favoris', 'info');
+    } else {
+      addToFavorites(product);
+      showToast('Produit ajouté aux favoris', 'success');
+    }
+    
+    setIsFavorited(!isFavorited);
+    
+    // Reset animation
+    setTimeout(() => setIsAnimating(false), 300);
+  };
+
   const formatPrice = (price: number) => {
     return new Intl.NumberFormat('fr-TN', {
       style: 'currency',
@@ -65,6 +96,23 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, onAddToCart }) => {
           </button>
         </div>
       </div>
+
+      {/* Favorite Button */}
+      <button
+        onClick={handleFavoriteClick}
+        className={`absolute top-3 right-3 p-2 rounded-full bg-white/80 backdrop-blur-sm shadow-md z-10 transition-all duration-300 ${
+          isFavorited 
+            ? 'text-red-500 hover:text-red-600' 
+            : 'text-gray-400 hover:text-red-500'
+        } ${isAnimating ? 'scale-125' : 'scale-100'}`}
+        aria-label={isFavorited ? 'Retirer des favoris' : 'Ajouter aux favoris'}
+      >
+        {isFavorited ? (
+          <HeartIcon className="h-5 w-5 fill-current" />
+        ) : (
+          <HeartOffIcon className="h-5 w-5" />
+        )}
+      </button>
 
       {/* Badges */}
       <div className="absolute top-3 left-3 flex flex-col space-y-1">

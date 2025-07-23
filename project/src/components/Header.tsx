@@ -1,10 +1,12 @@
 import React, { useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { ShoppingCart, Search, X } from 'lucide-react';
+import { ShoppingCart, Search, X, Heart } from 'lucide-react';
 import { useCart } from '../contexts/CartContext';
+import { useFavorites } from '../contexts/FavoritesContext';
 
 const Header: React.FC = () => {
   const { totalItems } = useCart();
+  const { favorites } = useFavorites();
   const location = useLocation();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
@@ -142,10 +144,25 @@ const Header: React.FC = () => {
 
           {/* Right side icons */}
           <div className="flex items-center space-x-4">
+            {/* Favorites */}
+            <Link
+              to="/favorites"
+              className="relative p-2 text-black hover:text-red-500 transition-colors"
+              aria-label="Mes favoris"
+            >
+              <Heart className="h-6 w-6" />
+              {favorites.length > 0 && (
+                <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
+                  {favorites.length}
+                </span>
+              )}
+            </Link>
+
             {/* Cart */}
             <Link
               to="/cart"
               className="relative p-2 text-black hover:text-yellow-600 transition-colors"
+              aria-label="Panier"
             >
               <ShoppingCart className="h-6 w-6" />
               {totalItems > 0 && (

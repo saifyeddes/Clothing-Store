@@ -1,15 +1,48 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { Heart, ShoppingCart, Star, Truck, Shield, RotateCcw } from 'lucide-react';
+import { Heart as HeartIcon, HeartOff as HeartOffIcon, ShoppingCart, Star, Truck, Shield, RotateCcw, Heart } from 'lucide-react';
 import { mockProducts } from '../lib/mockData';
 import { useCart } from '../contexts/CartContext';
+import { useFavorites } from '../contexts/FavoritesContext';
+import { showToast } from '../components/ToastNotification';
 
 const ProductDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { addToCart } = useCart();
-
+  const { isFavorite, addToFavorites, removeFromFavorites } = useFavorites();
+  const [isFavorited, setIsFavorited] = useState(false);
+  const [isAnimating, setIsAnimating] = useState(false);
   const product = mockProducts.find(p => p.id === id);
+
+  // Check if product is in favorites on component mount
+  useEffect(() => {
+    if (product) {
+      setIsFavorited(isFavorite(product.id));
+    }
+  }, [product, isFavorite]);
+
+  const handleFavoriteClick = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    if (!product) return;
+    
+    setIsAnimating(true);
+    
+    if (isFavorited) {
+      removeFromFavorites(product.id);
+      showToast('Produit retiré des favoris', 'info');
+    } else {
+      addToFavorites(product);
+      showToast('Produit ajouté aux favoris', 'success');
+    }
+    
+    setIsFavorited(!isFavorited);
+    
+    // Reset animation
+    setTimeout(() => setIsAnimating(false), 300);
+  };
   const [selectedSize, setSelectedSize] = useState('');
   const [selectedColor, setSelectedColor] = useState('');
   const [quantity, setQuantity] = useState(1);
@@ -41,23 +74,20 @@ const ProductDetail: React.FC = () => {
 
   const handleAddToCart = () => {
     if (!selectedSize || !selectedColor) {
-      // Highlight missing selections
       if (!selectedSize) {
         document.getElementById('size-section')?.scrollIntoView({ behavior: 'smooth' });
       }
       if (!selectedColor) {
         document.getElementById('color-section')?.scrollIntoView({ behavior: 'smooth' });
       }
-      alert('⚠️ Veuillez sélectionner une taille et une couleur avant d\'ajouter au panier');
+      showToast('⚠️ Veuillez sélectionner une taille et une couleur avant d\'ajouter au panier', 'error');
       return;
     }
     addToCart(product, selectedSize, selectedColor, quantity);
-    // Show success message
-    const successMsg = document.createElement('div');
-    successMsg.className = 'fixed top-4 right-4 bg-green-500 text-white px-6 py-3 rounded-lg shadow-lg z-50 animate-pulse';
-    successMsg.innerHTML = `✅ ${product.name} ajouté au panier !<br><small>Taille: ${selectedSize} | Couleur: ${selectedColor}</small>`;
-    document.body.appendChild(successMsg);
-    setTimeout(() => successMsg.remove(), 3000);
+    showToast(
+      `${product.name} ajouté au panier ! (Taille: ${selectedSize} | Couleur: ${selectedColor})`,
+      'success'
+    );
   };
 
   const getColorStyle = (color: string) => {
@@ -121,7 +151,24 @@ const ProductDetail: React.FC = () => {
             {/* Détails du produit */}
             <div>
               <div className="mb-6">
-                <h1 className="text-3xl font-bold text-gray-900 mb-2">{product.name}</h1>
+                <div className="flex items-center justify-between mb-2">
+                <h1 className="text-3xl font-bold text-gray-900">{product.name}</h1>
+                <button
+                  onClick={handleFavoriteClick}
+                  className={`p-2 rounded-full transition-all duration-300 ${
+                    isFavorited 
+                      ? 'text-red-500 hover:text-red-600' 
+                      : 'text-gray-400 hover:text-red-500'
+                  } ${isAnimating ? 'scale-125' : 'scale-100'}`}
+                  aria-label={isFavorited ? 'Retirer des favoris' : 'Ajouter aux favoris'}
+                >
+                  {isFavorited ? (
+                    <HeartIcon className="h-6 w-6 fill-current" />
+                  ) : (
+                    <HeartOffIcon className="h-6 w-6" />
+                  )}
+                </button>
+              </div>
                 <div className="flex items-center space-x-4 mb-4">
                   <div className="flex items-center">
                     {[...Array(5)].map((_, i) => (

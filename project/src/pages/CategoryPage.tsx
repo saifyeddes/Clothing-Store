@@ -1,4 +1,4 @@
-import { useMemo, useState, useEffect } from 'react';
+import { useMemo, useState, useEffect, useRef } from 'react';
 import { useParams, useSearchParams, useNavigate } from 'react-router-dom';
 import { X } from 'lucide-react';
 import { SlidersHorizontal, Filter as FilterIcon } from 'lucide-react';
@@ -6,6 +6,7 @@ import { mockProducts } from '../lib/mockData';
 import ProductCard from '../components/ProductCard';
 import { useCart } from '../contexts/CartContext';
 import { Product } from '../types';
+import { showToast } from '../components/ToastNotification';
 
 const CategoryPage: React.FC = () => {
   const navigate = useNavigate();
@@ -20,6 +21,24 @@ const CategoryPage: React.FC = () => {
   const [selectedColors, setSelectedColors] = useState<string[]>([]);
   const [selectedSizes, setSelectedSizes] = useState<string[]>([]);
   const [isFilterOpen, setIsFilterOpen] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
+  const filterContentRef = useRef<HTMLDivElement>(null);
+  
+  // Check if the device is mobile on component mount and window resize
+  useEffect(() => {
+    const checkIfMobile = () => {
+      setIsMobile(window.innerWidth < 1024); // 1024px is the lg breakpoint in Tailwind
+    };
+    
+    // Initial check
+    checkIfMobile();
+    
+    // Add event listener for window resize
+    window.addEventListener('resize', checkIfMobile);
+    
+    // Cleanup
+    return () => window.removeEventListener('resize', checkIfMobile);
+  }, []);
 
 
   // Mettre à jour l'état des filtres lorsque les paramètres d'URL changent
@@ -81,7 +100,7 @@ const CategoryPage: React.FC = () => {
     const defaultSize = product.sizes[0];
     const defaultColor = product.colors[0];
     addToCart(product, defaultSize, defaultColor, 1);
-    alert('Produit ajouté au panier !');
+    showToast(`${product.name} ajouté au panier !`, 'success');
   };
 
   const getCategoryTitle = () => {
@@ -145,6 +164,17 @@ const CategoryPage: React.FC = () => {
     (selectedColors.length > 0 ? 1 : 0) + 
     (selectedSizes.length > 0 ? 1 : 0) + 
     (priceRange[1] < 200 ? 1 : 0);
+    
+  // Update URL with filters
+  useEffect(() => {
+    const params = new URLSearchParams();
+    if (selectedColors.length > 0) params.set('colors', selectedColors.join(','));
+    if (selectedSizes.length > 0) params.set('sizes', selectedSizes.join(','));
+    if (priceRange[1] < 200) params.set('price', `${priceRange[0]}-${priceRange[1]}`);
+    
+    const newUrl = `${window.location.pathname}?${params.toString()}`;
+    window.history.replaceState({}, '', newUrl);
+  }, [selectedColors, selectedSizes, priceRange]);
 
   const resetFilters = () => {
     setSortBy('name');
@@ -225,114 +255,74 @@ const CategoryPage: React.FC = () => {
         </div>
       </div>
 
-      {/* Floating Filter Button */}
-      <div className="fixed bottom-6 left-1/2 transform -translate-x-1/2 z-50">
+      {/* Single Filter Button - Visible on all devices but styled differently */}
+      <div className={`fixed bottom-6 ${isMobile ? 'left-1/2 transform -translate-x-1/2' : 'right-6'} z-50`}>
         <button
           onClick={() => setIsFilterOpen(true)}
-          className="flex items-center justify-center px-5 py-2.5 bg-gradient-to-r from-yellow-500 to-yellow-600 text-white font-medium rounded-full shadow-lg hover:shadow-xl focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:ring-offset-2 transition-all duration-200 transform hover:scale-105 active:scale-95"
+          className={`flex items-center justify-center ${
+            isMobile 
+              ? 'px-5 py-2.5 bg-gradient-to-r from-yellow-500 to-yellow-600 hover:from-yellow-600 hover:to-yellow-700 text-white font-medium rounded-full shadow-lg hover:shadow-xl focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:ring-offset-2 transition-all duration-200 transform hover:scale-105 active:scale-95'
+              : 'p-3 bg-yellow-500 hover:bg-yellow-600 text-white rounded-full shadow-lg transition-colors'
+          }`}
         >
-          <SlidersHorizontal className="h-4 w-4 mr-2" />
-          <span className="text-sm">Filtrer</span>
-          {activeFilterCount > 0 && (
-            <span className="ml-2 inline-flex items-center justify-center min-w-5 h-5 text-xs font-bold text-yellow-600 bg-white rounded-full border-2 border-white shadow-sm">
-              {activeFilterCount}
-            </span>
+          {isMobile ? (
+            <>
+              <SlidersHorizontal className="h-4 w-4 mr-2" />
+              <span className="text-sm">Filtrer</span>
+              {activeFilterCount > 0 && (
+                <span className="ml-2 inline-flex items-center justify-center min-w-5 h-5 text-xs font-bold text-yellow-600 bg-white rounded-full border-2 border-white shadow-sm">
+                  {activeFilterCount}
+                </span>
+              )}
+            </>
+          ) : (
+            <>
+              <SlidersHorizontal className="h-6 w-6" />
+              {activeFilterCount > 0 && (
+                <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center">
+                  {activeFilterCount}
+                </span>
+              )}
+            </>
           )}
         </button>
       </div>
 
-      {/* Filter Popup */}
-      {/* Filter Popup Overlay */}
+      {/* Filter Modal */}
       {isFilterOpen && (
-        <div className="fixed inset-0 z-[100] overflow-y-auto">
-          {/* Backdrop with Blur */}
-          <div 
-            className="fixed inset-0 bg-black/60 backdrop-blur-sm transition-opacity"
-            onClick={() => setIsFilterOpen(false)}
-          ></div>
+        <div className="fixed inset-0 z-50 overflow-hidden">
+          <div className="absolute inset-0 bg-black/30" onClick={() => setIsFilterOpen(false)} />
           
-          {/* Modal */}
-          <div className="flex min-h-full items-center justify-center p-4 sm:p-6">
-            <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-md max-h-[90vh] overflow-hidden border border-gray-100">
+          <div className="fixed inset-y-0 right-0 w-full max-w-md bg-white shadow-xl transform transition-transform duration-300 ease-in-out">
+            <div className="h-full flex flex-col">
               {/* Header */}
-              <div className="sticky top-0 bg-white z-10 border-b border-gray-100">
-                <div className="flex items-center justify-between p-6 pb-4 bg-gradient-to-r from-yellow-50 to-white">
-                  <div className="flex items-center">
-                    <div className="p-2 bg-yellow-100 rounded-lg mr-3">
-                      <SlidersHorizontal className="h-5 w-5 text-yellow-600" />
-                    </div>
-                    <div>
-                      <h2 className="text-xl font-bold text-gray-900">Filtres avancés</h2>
-                      {activeFilterCount > 0 && (
-                        <p className="text-sm text-gray-500 mt-0.5">
-                          {activeFilterCount} {activeFilterCount > 1 ? 'filtres actifs' : 'filtre actif'}
-                        </p>
-                      )}
-                    </div>
-                  </div>
-                  <button
-                    onClick={() => setIsFilterOpen(false)}
-                    className="p-2 hover:bg-gray-100 rounded-full transition-colors text-gray-500 hover:text-gray-700"
-                    aria-label="Fermer"
-                  >
-                    <X className="h-5 w-5" />
-                  </button>
-                </div>
-                
-                {/* Active Filters Bar */}
-                {activeFilterCount > 0 && (
-                  <div className="px-6 py-3 bg-yellow-50 border-b border-yellow-100">
-                    <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-hide">
-                      <span className="text-xs font-medium text-gray-500 whitespace-nowrap">Filtres :</span>
-                      {selectedColors.length > 0 && (
-                        <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-white text-yellow-800 border border-yellow-200 shadow-sm whitespace-nowrap">
-                          🎨 {selectedColors.length} couleur{selectedColors.length > 1 ? 's' : ''}
-                        </span>
-                      )}
-                      {selectedSizes.length > 0 && (
-                        <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-white text-blue-800 border border-blue-200 shadow-sm whitespace-nowrap">
-                          📏 {selectedSizes.length} taille{selectedSizes.length > 1 ? 's' : ''}
-                        </span>
-                      )}
-                      {priceRange[1] < 200 && (
-                        <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-white text-green-800 border border-green-200 shadow-sm whitespace-nowrap">
-                          💰 Jusqu'à {priceRange[1]} TND
-                        </span>
-                      )}
-                    </div>
-                  </div>
-                )}
+              <div className="flex items-center justify-between p-4 border-b">
+                <h3 className="text-lg font-medium">Filtres</h3>
+                <button 
+                  onClick={() => setIsFilterOpen(false)}
+                  className="text-gray-400 hover:text-gray-500"
+                >
+                  <X className="h-6 w-6" />
+                </button>
               </div>
-
-              {/* Filter Content */}
-              <div className="p-6 space-y-8 overflow-y-auto" style={{ maxHeight: 'calc(90vh - 180px)' }}>
-                {/* Sort */}
-                <div className="bg-gray-50 p-4 rounded-xl">
-                  <h3 className="font-semibold text-gray-800 mb-3 flex items-center">
-                    <svg className="w-4 h-4 mr-2 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4h13M3 8h9m-9 4h9m5-4v12m0 0l-4-4m4 4l4-4" />
-                    </svg>
-                    Trier par
-                  </h3>
-                  <div className="space-y-2">
-                    {[
-                      { value: 'name', label: 'Nom (A-Z)' },
-                      { value: 'price-low', label: 'Prix croissant' },
-                      { value: 'price-high', label: 'Prix décroissant' }
-                    ].map((option) => (
-                      <label key={option.value} className="flex items-center p-2 hover:bg-white rounded-lg cursor-pointer transition-colors">
-                        <input
-                          type="radio"
-                          name="sort"
-                          value={option.value}
-                          checked={sortBy === option.value}
-                          onChange={() => setSortBy(option.value)}
-                          className="h-4 w-4 text-yellow-600 focus:ring-yellow-500 border-gray-300"
-                        />
-                        <span className="ml-3 text-sm text-gray-700">{option.label}</span>
-                      </label>
-                    ))}
-                  </div>
+              
+              {/* Scrollable content */}
+              <div 
+                ref={filterContentRef}
+                className="flex-1 overflow-y-auto p-4 space-y-6"
+              >
+                {/* Sort by */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Trier par</label>
+                  <select
+                    value={sortBy}
+                    onChange={(e) => setSortBy(e.target.value)}
+                    className="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-md"
+                  >
+                    <option value="name">Nom (A-Z)</option>
+                    <option value="price-low">Prix croissant</option>
+                    <option value="price-high">Prix décroissant</option>
+                  </select>
                 </div>
 
                 {/* Price Range */}

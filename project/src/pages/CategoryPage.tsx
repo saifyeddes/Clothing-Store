@@ -8,6 +8,11 @@ import { useCart } from '../contexts/CartContext';
 import { Product } from '../types';
 import { showToast } from '../components/ToastNotification';
 
+// Extend the base Product type to include gender
+interface ProductWithGender extends Product {
+  gender?: 'homme' | 'femme' | 'unisexe';
+}
+
 const CategoryPage: React.FC = () => {
   const navigate = useNavigate();
   const { gender } = useParams<{ gender: string }>();
@@ -49,7 +54,7 @@ const CategoryPage: React.FC = () => {
 
   // Filter products by gender and search query
   const filteredProducts = useMemo(() => {
-    return mockProducts.filter(product => {
+    return mockProducts.filter((product: ProductWithGender) => {
       // Apply gender filter
       if (gender === 'homme' && product.gender !== 'homme') return false;
       if (gender === 'femme' && product.gender !== 'femme') return false;

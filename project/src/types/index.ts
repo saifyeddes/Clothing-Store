@@ -23,7 +23,7 @@ export interface Product {
   images: string[];
   sizes: string[];
   colors: string[];
-  gender: 'homme' | 'femme' | 'unisexe';
+  rating: 4 | 4.5 | 5;
   stock_quantity: number;
   is_featured: boolean;
   created_at: string;

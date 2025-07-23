@@ -3,20 +3,8 @@ import type { Product, Category, User, Order, Review } from '../types';
 export const mockCategories: Category[] = [
   {
     id: '1',
-    name: 'T-Shirts Unisexes',
+    name: 'Unisexe',
     image_url: 'https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1180&q=80',
-    created_at: '2025-01-01T00:00:00Z'
-  },
-  {
-    id: '2',
-    name: 'Sweats à Capuche',
-    image_url: 'https://images.unsplash.com/photo-1591047139829-d91aecb6caea?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1076&q=80',
-    created_at: '2025-01-01T00:00:00Z'
-  },
-  {
-    id: '3',
-    name: 'Accessoires',
-    image_url: 'https://images.unsplash.com/photo-1515886653613-0340e7db5b3f?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1170&q=80',
     created_at: '2025-01-01T00:00:00Z'
   }
 ];
@@ -25,55 +13,61 @@ export const mockProducts: Product[] = [
   // T-Shirts Unisexes
   {
     id: '1',
-    name: 'T-Shirt Classique Homme Noir',
-    description: 'T-shirt en coton 100% biologique, coupe moderne et confortable. Parfait pour un look décontracté au quotidien.',
-    price: 35.000,
+    name: 'T-Shirt Décontracté',
+    description: 'T-shirt décontracté, coupe oversize et matière douce. Idéal pour un look décontracté et tendance.',
+    price: 38.000,
     category_id: '1',
     category: mockCategories[0],
     images: [
-      'https://images.pexels.com/photos/1183266/pexels-photo-1183266.jpeg',
-      'https://images.pexels.com/photos/1926769/pexels-photo-1926769.jpeg'
+      'https://images.pexels.com/photos/1021693/pexels-photo-1021693.jpeg',
+      'https://images.pexels.com/photos/1036623/pexels-photo-1036623.jpeg'
     ],
-    sizes: ['S', 'M', 'L', 'XL', 'XXL'],
-    colors: ['Noir', 'Blanc', 'Gris', 'Marine'],
-    gender: 'homme',
-    stock_quantity: 50,
+    sizes: ['XS', 'S', 'M', 'L'],
+    colors: ['Blanc cassé', 'Noir', 'Gris', 'Rose poudré'],
+    rating: 4.5,
+    stock_quantity: 28,
     is_featured: true,
-    created_at: '2025-01-01T00:00:00Z'
+    created_at: '2025-07-18T00:00:00Z'
   },
   {
     id: '2',
-    name: 'T-Shirt Graphique Homme Sport',
-    description: 'T-shirt avec design graphique moderne, idéal pour le sport et les loisirs. Tissu respirant et séchage rapide.',
+    name: 'T-Shirt Graphique',
+    description: 'T-shirt à manches courtes avec impression graphique. Coupe moderne et matière respirante pour un confort optimal.',
     price: 42.000,
     category_id: '1',
     category: mockCategories[0],
-    images: ['https://images.pexels.com/photos/1926769/pexels-photo-1926769.jpeg'],
-    sizes: ['S', 'M', 'L', 'XL'],
-    colors: ['Blanc', 'Noir', 'Rouge', 'Bleu'],
-    gender: 'homme',
+    images: [
+      'https://images.pexels.com/photos/428340/pexels-photo-428340.jpeg',
+      'https://images.pexels.com/photos/2294342/pexels-photo-2294342.jpeg'
+    ],
+    sizes: ['M', 'L', 'XL'],
+    colors: ['Noir', 'Bleu', 'Rouge'],
+    rating: 4,
     stock_quantity: 30,
     is_featured: true,
-    created_at: '2025-01-01T00:00:00Z'
+    created_at: '2025-07-15T00:00:00Z'
   },
   {
     id: '3',
-    name: 'T-Shirt Polo Homme Élégant',
-    description: 'Polo classique en coton piqué, parfait pour un look casual-chic. Coupe ajustée et finitions soignées.',
-    price: 55.000,
+    name: 'T-Shirt Col V',
+    description: 'T-shirt à col V, idéal pour un look décontracté. Matière douce et résistante pour un confort optimal toute la journée.',
+    price: 39.500,
     category_id: '1',
     category: mockCategories[0],
-    images: ['https://images.pexels.com/photos/1183266/pexels-photo-1183266.jpeg'],
-    sizes: ['S', 'M', 'L', 'XL', 'XXL'],
-    colors: ['Marine', 'Blanc', 'Gris', 'Bordeaux'],
-    gender: 'homme',
-    stock_quantity: 25,
+    images: [
+      'https://images.pexels.com/photos/1040945/pexels-photo-1040945.jpeg',
+      'https://images.pexels.com/photos/1043474/pexels-photo-1043474.jpeg'
+    ],
+    sizes: ['S', 'M', 'L', 'XL'],
+    colors: ['Bleu marine', 'Blanc', 'Noir'],
+    rating: 4.5,
+    stock_quantity: 20,
     is_featured: false,
     created_at: '2025-01-01T00:00:00Z'
   },
   {
     id: '4',
-    name: 'T-Shirt Homme Vintage',
+    name: 'T-Shirt Vintage',
     description: 'T-shirt au style vintage avec impression rétro. Coton doux et confortable pour un look authentique.',
     price: 38.000,
     category_id: '1',
@@ -81,71 +75,71 @@ export const mockProducts: Product[] = [
     images: ['https://images.pexels.com/photos/1926769/pexels-photo-1926769.jpeg'],
     sizes: ['M', 'L', 'XL'],
     colors: ['Beige', 'Kaki', 'Marron'],
-    gender: 'homme',
-    stock_quantity: 20,
-    is_featured: true,
+    rating: 4.5,
+    stock_quantity: 1, // Will show as 'Stock Limité' (Low Stock)
+    is_featured: false,
     created_at: '2025-01-01T00:00:00Z'
   },
 
   // T-Shirts Femme
   {
     id: '5',
-    name: 'T-Shirt Femme Basique Coton',
-    description: 'T-shirt basique en coton doux, coupe féminine flatteuse. Essentiel de la garde-robe moderne.',
+    name: 'T-Shirt Basique Coton',
+    description: 'T-shirt basique en coton doux, coupe moderne et confortable. Essentiel de la garde-robe quotidienne.',
     price: 32.000,
-    category_id: '2',
-    category: mockCategories[1],
+    category_id: '1',
+    category: mockCategories[0],
     images: ['https://images.pexels.com/photos/1036622/pexels-photo-1036622.jpeg'],
     sizes: ['XS', 'S', 'M', 'L', 'XL'],
     colors: ['Rose', 'Blanc', 'Noir', 'Lavande'],
-    gender: 'femme',
-    stock_quantity: 40,
-    is_featured: true,
+    rating: 4.5,
+    stock_quantity: 30,
+    is_featured: true, // Will show as 'Nouveau' (New)
     created_at: '2025-01-01T00:00:00Z'
   },
   {
     id: '6',
-    name: 'T-Shirt Femme Crop Top',
-    description: 'Crop top tendance en coton stretch, parfait pour les looks estivaux. Coupe moderne et confortable.',
-    price: 28.000,
-    category_id: '2',
-    category: mockCategories[1],
-    images: ['https://images.pexels.com/photos/1036622/pexels-photo-1036622.jpeg'],
+    name: 'T-Shirt Col V',
+    description: 'T-shirt à col V, idéal pour les looks décontractés. Coupe moderne et matière douce pour un confort optimal.',
+    price: 35.000,
+    category_id: '1',
+    category: mockCategories[0],
+    images: ['https://images.pexels.com/photos/1300551/pexels-photo-1300551.jpeg'],
     sizes: ['XS', 'S', 'M', 'L'],
-    colors: ['Blanc', 'Rose', 'Jaune', 'Menthe'],
-    gender: 'femme',
-    stock_quantity: 35,
-    is_featured: true,
-    created_at: '2025-01-01T00:00:00Z'
-  },
-  {
-    id: '7',
-    name: 'T-Shirt Femme Oversize',
-    description: 'T-shirt oversize tendance, parfait pour un look décontracté et moderne. Coton premium ultra-doux.',
-    price: 45.000,
-    category_id: '2',
-    category: mockCategories[1],
-    images: ['https://images.pexels.com/photos/1036622/pexels-photo-1036622.jpeg'],
-    sizes: ['S', 'M', 'L'],
-    colors: ['Beige', 'Gris', 'Blanc', 'Noir'],
-    gender: 'femme',
+    colors: ['Noir', 'Blanc', 'Gris', 'Bleu'],
+    rating: 4.5,
     stock_quantity: 22,
     is_featured: false,
     created_at: '2025-01-01T00:00:00Z'
   },
   {
-    id: '8',
-    name: 'T-Shirt Femme Motif Floral',
-    description: 'T-shirt avec joli motif floral, parfait pour le printemps. Coupe féminine et tissu respirant.',
-    price: 39.000,
-    category_id: '2',
-    category: mockCategories[1],
+    id: '7',
+    name: 'T-Shirt Manches Longues',
+    description: 'T-shirt à manches longues, idéal pour les saisons froides. Confortable et stylé.',
+    price: 45.000,
+    category_id: '1',
+    category: mockCategories[0],
     images: ['https://images.pexels.com/photos/1036622/pexels-photo-1036622.jpeg'],
     sizes: ['XS', 'S', 'M', 'L', 'XL'],
     colors: ['Blanc', 'Rose', 'Bleu'],
-    gender: 'femme',
-    stock_quantity: 28,
-    is_featured: true,
+    rating: 4.5,
+    stock_quantity: 0, // Will show as 'Épuisé' (Out of Stock)
+    is_featured: false,
+    created_at: '2025-01-01T00:00:00Z'
+  },
+  {
+    id: '8',
+    name: 'T-Shirt Motif Floral',
+    description: 'T-shirt avec joli motif floral, parfait pour le printemps. Coupe moderne et tissu respirant.',
+    price: 39.000,
+    category_id: '1',
+    category: mockCategories[0],
+    images: ['https://images.pexels.com/photos/1036622/pexels-photo-1036622.jpeg'],
+    sizes: ['XS', 'S', 'M', 'L', 'XL'],
+    colors: ['Blanc', 'Rose', 'Bleu'],
+    rating: 4.5,
+    stock_quantity: 4, // Will show as 'Stock Limité' (Low Stock)
+    is_featured: false,
     created_at: '2025-01-01T00:00:00Z'
   },
 
@@ -155,13 +149,13 @@ export const mockProducts: Product[] = [
     name: 'T-Shirt Enfant Coloré',
     description: 'T-shirt amusant pour enfants avec couleurs vives. Coton hypoallergénique et résistant aux lavages.',
     price: 22.000,
-    category_id: '3',
-    category: mockCategories[2],
+    stock_quantity: 0, // Will show as 'Épuisé' (Out of Stock)
+    category_id: '1',
+    category: mockCategories[0],
     images: ['https://images.pexels.com/photos/1620760/pexels-photo-1620760.jpeg'],
     sizes: ['2-3 ans', '4-5 ans', '6-7 ans', '8-9 ans', '10-11 ans'],
     colors: ['Rouge', 'Bleu', 'Jaune', 'Vert'],
-    gender: 'unisexe',
-    stock_quantity: 45,
+    rating: 4.5,
     is_featured: true,
     created_at: '2025-01-01T00:00:00Z'
   },
@@ -175,7 +169,7 @@ export const mockProducts: Product[] = [
     images: ['https://images.pexels.com/photos/1620760/pexels-photo-1620760.jpeg'],
     sizes: ['2-3 ans', '4-5 ans', '6-7 ans', '8-9 ans'],
     colors: ['Bleu', 'Rouge', 'Noir'],
-    gender: 'unisexe',
+    rating: 4.5,
     stock_quantity: 30,
     is_featured: true,
     created_at: '2025-01-01T00:00:00Z'
@@ -190,7 +184,7 @@ export const mockProducts: Product[] = [
     images: ['https://images.pexels.com/photos/1620760/pexels-photo-1620760.jpeg'],
     sizes: ['2-3 ans', '4-5 ans', '6-7 ans', '8-9 ans', '10-11 ans'],
     colors: ['Rose', 'Violet', 'Blanc'],
-    gender: 'femme',
+    rating: 4.5,
     stock_quantity: 25,
     is_featured: false,
     created_at: '2025-01-01T00:00:00Z'
@@ -205,7 +199,7 @@ export const mockProducts: Product[] = [
     images: ['https://images.pexels.com/photos/1620760/pexels-photo-1620760.jpeg'],
     sizes: ['4-5 ans', '6-7 ans', '8-9 ans', '10-11 ans', '12-13 ans'],
     colors: ['Bleu', 'Vert', 'Orange', 'Noir'],
-    gender: 'unisexe',
+    rating: 4.5,
     stock_quantity: 35,
     is_featured: true,
     created_at: '2025-01-01T00:00:00Z'

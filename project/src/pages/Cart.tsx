@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { Minus, Plus, ShoppingBag, ArrowLeft, X } from 'lucide-react';
+import { Minus, Plus, ShoppingBag, ArrowLeft, Trash2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useCart } from '../contexts/CartContext';
 
@@ -92,12 +92,6 @@ const Cart: React.FC = () => {
                         alt={item.product.name}
                         className="w-full h-full object-cover object-center transform hover:scale-105 transition-transform duration-300"
                       />
-                      <button
-                        onClick={() => removeFromCart(item.id)}
-                        className="absolute -top-2 -right-2 bg-red-500 text-white p-1.5 rounded-full hover:bg-red-600 transition-colors shadow-lg"
-                      >
-                        <X className="h-4 w-4" />
-                      </button>
                     </div>
 
                     {/* Product Details */}
@@ -143,10 +137,17 @@ const Cart: React.FC = () => {
                         </button>
                       </div>
                       
-                      <div className="text-right sm:text-left">
+                      <div className="text-right sm:text-left flex items-center gap-2">
                         <p className="text-lg font-bold text-gray-900">
                           {formatPrice(item.product.price * item.quantity)}
                         </p>
+                        <button
+                          onClick={() => removeFromCart(item.id)}
+                          className="text-gray-400 hover:text-red-500 transition-colors p-1"
+                          aria-label="Supprimer l'article"
+                        >
+                          <Trash2 className="h-5 w-5" />
+                        </button>
                       </div>
                     </div>
                   </div>

@@ -1,23 +1,38 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { User, Lock } from 'lucide-react';
+import { User, Lock, Eye, EyeOff } from 'lucide-react';
+import { useAuth } from '../../contexts/AuthContext';
 
 const AdminLogin: React.FC = () => {
-  const [username, setUsername] = useState('');
+  const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
+  const { signIn } = useAuth();
   const navigate = useNavigate();
 
-  const handleLogin = (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (username === 'room.tn' && password === 'room.tn') {
-      // In a real app, you'd set a token in localStorage/sessionStorage
-      // and use a protected route component.
-      localStorage.setItem('isAdminAuthenticated', 'true');
-      navigate('/admin/dashboard');
-    } else {
-      setError('Invalid credentials');
+    setLoading(true);
+    setError('');
+
+    try {
+      await signIn(email, password);
+      // Add a small delay to ensure the user state is updated
+      setTimeout(() => {
+        navigate('/admin/dashboard', { replace: true });
+      }, 100);
+    } catch (error: any) {
+      setError('Identifiants invalides');
+      console.error('Login error:', error);
+    } finally {
+      setLoading(false);
     }
+  };
+
+  const togglePasswordVisibility = () => {
+    setShowPassword(!showPassword);
   };
 
   return (
@@ -41,12 +56,12 @@ const AdminLogin: React.FC = () => {
                 <User className="h-5 w-5 text-gray-400" />
               </div>
               <input
-                id="username"
-                type="text"
-                value={username}
-                onChange={(e) => setUsername(e.target.value)}
+                id="email"
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
                 className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
-                placeholder="Nom d'utilisateur"
+                placeholder="Email"
                 required
               />
             </div>
@@ -57,13 +72,25 @@ const AdminLogin: React.FC = () => {
               </div>
               <input
                 id="password"
-                type="password"
+                type={showPassword ? 'text' : 'password'}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
+                className="w-full pl-10 pr-10 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
                 placeholder="Mot de passe"
                 required
               />
+              <button
+                type="button"
+                onClick={togglePasswordVisibility}
+                className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600"
+                aria-label={showPassword ? 'Cacher le mot de passe' : 'Afficher le mot de passe'}
+              >
+                {showPassword ? (
+                  <EyeOff className="h-5 w-5" />
+                ) : (
+                  <Eye className="h-5 w-5" />
+                )}
+              </button>
             </div>
 
             {error && <p className="text-red-500 text-sm text-center">{error}</p>}
@@ -72,7 +99,7 @@ const AdminLogin: React.FC = () => {
               type="submit"
               className="w-full bg-blue-600 text-white font-bold py-2 px-4 rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-4 focus:ring-blue-300 transition-all duration-300"
             >
-              Se connecter
+{loading ? 'Connexion en cours...' : 'Se connecter'}
             </button>
           </form>
         </div>

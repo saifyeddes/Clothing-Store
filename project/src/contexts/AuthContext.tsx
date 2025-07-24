@@ -29,11 +29,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     // Simulate API call
     await new Promise(resolve => setTimeout(resolve, 1000));
     
-    // Mock authentication - accept any email/password
-    if (email && password) {
-      setUser({ ...mockUser, email });
+    // Check for admin credentials
+    if (email === 'admin@room.tn' && password === 'admin@room.tn') {
+      setUser({ 
+        ...mockUser, 
+        email: 'admin@room.tn',
+        role: 'admin',
+        full_name: 'Admin'
+      });
     } else {
-      throw new Error('Email et mot de passe requis');
+      throw new Error('Email ou mot de passe incorrect');
     }
     setLoading(false);
   };

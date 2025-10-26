@@ -1,12 +1,19 @@
-import React, { useContext } from 'react';
-import { Navigate, Outlet } from 'react-router-dom';
+import { Navigate, Outlet, useLocation } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 
-const ProtectedRoute: React.FC = () => {
-  const { user } = useAuth();
-  const isAdmin = user?.role === 'admin' || user?.role === 'super_admin';
+const ProtectedRoute = () => {
+  const { user, loading } = useAuth();
+  const location = useLocation();
 
-  return isAdmin ? <Outlet /> : <Navigate to="/admin" replace />;
+  if (loading) {
+    return <div>Chargement...</div>;
+  }
+
+  if (!user) {
+    return <Navigate to="/admin" state={{ from: location }} replace />;
+  }
+
+  return <Outlet />;
 };
 
 export default ProtectedRoute;

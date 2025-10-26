@@ -6,7 +6,6 @@ import { FavoritesProvider } from './contexts/FavoritesContext';
 import { ToastNotification } from './components/ToastNotification';
 import MainLayout from './components/MainLayout';
 import Home from './pages/Home';
-import Login from './pages/Login';
 import Register from './pages/Register';
 import Cart from './pages/Cart';
 import Checkout from './pages/Checkout';
@@ -35,7 +34,6 @@ function App() {
               {/* Public routes with Header and Footer */}
               <Route element={<MainLayout />}>
                 <Route path="/" element={<Home />} />
-                <Route path="/login" element={<Login />} />
                 <Route path="/register" element={<Register />} />
                 <Route path="/cart" element={<Cart />} />
                 <Route path="/checkout" element={<Checkout />} />

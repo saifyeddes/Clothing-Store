@@ -2,16 +2,11 @@ import { useMemo, useState, useEffect, Fragment } from 'react';
 import { useParams, useSearchParams, useNavigate } from 'react-router-dom';
 import { X, Filter as FilterIcon, Check } from 'lucide-react';
 import { Dialog, Transition } from '@headlessui/react';
-import { mockProducts } from '../lib/mockData';
 import ProductCard from '../components/ProductCard';
 import { useCart } from '../contexts/CartContext';
-import { Product } from '../types';
+import type { Product } from '../types';
 import { showToast } from '../components/ToastNotification';
-
-// Extend the base Product type to include gender
-interface ProductWithGender extends Product {
-  gender?: 'homme' | 'femme' | 'unisexe';
-}
+import { products as productsApi, ASSETS_BASE } from '../services/api';
 
 const CategoryPage: React.FC = () => {
   const navigate = useNavigate();
@@ -63,13 +58,63 @@ const CategoryPage: React.FC = () => {
     // Pas besoin de gérer searchInput ici car la recherche est maintenant gérée dans le Header
   }, [searchQuery]);
 
-  // Filter products by gender and search query
+  const [fetchedProducts, setFetchedProducts] = useState<Product[]>([]);
+
+  type BackendImage = { url: string; alt?: string };
+  type BackendColor = { name?: string; code?: string } | string;
+  type BackendProduct = {
+    _id: string;
+    name: string;
+    description: string;
+    price: number;
+    category: string;
+    colors?: BackendColor[];
+    sizes?: string[];
+    images?: BackendImage[];
+    stock?: number;
+    is_featured?: boolean;
+    createdAt: string;
+  };
+
+  useEffect(() => {
+    const load = async () => {
+      try {
+        // Optionally can pass query params, but backend filtering by category happens with ?category=...
+        const params: Record<string, string> = {};
+        if (gender === 'homme' || gender === 'femme' || gender === 'unisexe') {
+          params.category = gender;
+        }
+        const data: BackendProduct[] = await productsApi.getAll(params);
+        const mapped: Product[] = (data || []).map((p) => ({
+          id: p._id,
+          name: p.name,
+          description: p.description,
+          price: p.price,
+          category_id: p.category,
+          category: { id: p.category, name: p.category, image_url: '', created_at: p.createdAt },
+          images: Array.isArray(p.images) ? p.images.map((img) => `${ASSETS_BASE}${img.url}`) : [],
+          sizes: p.sizes || [],
+          colors: Array.isArray(p.colors) ? p.colors.map((c) => (typeof c === 'string' ? c : c.name || c.code || '')) : [],
+          stock_quantity: p.stock ?? 0,
+          is_featured: !!p.is_featured,
+          created_at: p.createdAt,
+          rating: 5,
+        }));
+        setFetchedProducts(mapped);
+      } catch (e) {
+        console.error('Failed to load products', e);
+      }
+    };
+    load();
+  }, [gender]);
+
+  // Filter products by gender and search query (client-side on fetched list)
   const filteredProducts = useMemo(() => {
-    return mockProducts.filter((product: ProductWithGender) => {
-      // Apply gender filter
-      if (gender === 'homme' && product.gender !== 'homme') return false;
-      if (gender === 'femme' && product.gender !== 'femme') return false;
-      if (gender === 'enfant' && product.gender !== 'unisexe') return false;
+    return fetchedProducts.filter((product: Product) => {
+      // Apply gender filter when route param is enfant -> unisexe
+      if (gender === 'homme' && product.category_id !== 'homme') return false;
+      if (gender === 'femme' && product.category_id !== 'femme') return false;
+      if (gender === 'enfant' && product.category_id !== 'unisexe') return false;
       
       // Apply search query filter if present
       if (searchQuery) {
@@ -83,7 +128,7 @@ const CategoryPage: React.FC = () => {
       
       return true;
     });
-  }, [gender, searchQuery]);
+  }, [gender, searchQuery, fetchedProducts]);
 
   // Apply additional filters
   const finalProducts = useMemo(() => {

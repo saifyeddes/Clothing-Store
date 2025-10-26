@@ -1,10 +1,10 @@
 import React, { useEffect, useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { ArrowRight } from 'lucide-react';
-import { mockProducts } from '../lib/mockData';
 import ProductCard from '../components/ProductCard';
 import { useCart } from '../contexts/CartContext';
 import type { Product } from '../types';
+import { products as productsApi, ASSETS_BASE } from '../services/api';
 import toast, { Toaster } from 'react-hot-toast';
 
 
@@ -24,11 +24,59 @@ const heroImages = [
 
 const Home: React.FC = () => {
   const { addToCart } = useCart();
-  const navigate = useNavigate();
-  const [searchQuery, setSearchQuery] = useState('');
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [isPaused, setIsPaused] = useState(false);
-  const featuredProducts = mockProducts.filter((product) => product.is_featured);
+  const [featuredProducts, setFeaturedProducts] = useState<Product[]>([]);
+
+  type BackendImage = { url: string; alt?: string };
+  type BackendColor = { name?: string; code?: string } | string;
+  type BackendProduct = {
+    _id: string;
+    name: string;
+    description: string;
+    price: number;
+    category: string;
+    colors?: BackendColor[];
+    sizes?: string[];
+    images?: BackendImage[];
+    stock?: number;
+    is_featured?: boolean;
+    createdAt: string;
+  };
+
+  const mapFromBackend = React.useCallback((p: BackendProduct): Product => ({
+    id: p._id,
+    name: p.name,
+    description: p.description,
+    price: p.price,
+    category_id: p.category,
+    category: { id: p.category, name: p.category, image_url: '', created_at: p.createdAt },
+    images: Array.isArray(p.images) ? p.images.map((img) => `${ASSETS_BASE}${img.url}`) : [],
+    sizes: p.sizes || [],
+    colors: Array.isArray(p.colors) ? p.colors.map((c) => (typeof c === 'string' ? c : c.name || c.code || '')) : [],
+    stock_quantity: p.stock ?? 0,
+    is_featured: !!p.is_featured,
+    created_at: p.createdAt,
+    rating: 5,
+  }), []);
+
+  useEffect(() => {
+    const load = async () => {
+      try {
+        const [featuredRes, newRes]: [BackendProduct[], BackendProduct[]] = await Promise.all([
+          productsApi.getAll({ featured: true }),
+          productsApi.getAll({ new: true }),
+        ]);
+        const merged = [...(featuredRes || []), ...(newRes || [])];
+        const byId = new Map<string, BackendProduct>();
+        merged.forEach((p) => byId.set(p._id, p));
+        setFeaturedProducts(Array.from(byId.values()).map(mapFromBackend));
+      } catch (e) {
+        console.error('Failed to load featured products', e);
+      }
+    };
+    load();
+  }, [mapFromBackend]);
 
   // Auto-advance carousel
   useEffect(() => {
@@ -43,13 +91,7 @@ const Home: React.FC = () => {
     return () => clearInterval(timer);
   }, [isPaused]);
 
-  const handleSearch = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (searchQuery.trim()) {
-      navigate(`/category/all?search=${encodeURIComponent(searchQuery.trim())}`);
-      setSearchQuery('');
-    }
-  };
+  // search handled in Header; removing unused local handler
 
   const handleQuickAddToCart = (product: Product) => {
     const defaultSize = product.sizes[0];

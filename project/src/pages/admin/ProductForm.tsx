@@ -4,13 +4,14 @@ import { mockCategories } from '../../lib/mockData';
 
 interface ProductFormProps {
   product: Product | null;
-  onSubmit: (product: Product) => void;
+  onSubmit: (formData: FormData) => void;
   onClose: () => void;
 }
 
-type FormDataType = Omit<Product, 'id' | 'category' | 'images'> & {
+type FormDataType = Omit<Product, 'id' | 'category' | 'images' | 'rating'> & {
   category_id: string;
   images: (string | File)[];
+  gender: 'homme' | 'femme' | 'unisexe';
 };
 
 const initialState: FormDataType = {
@@ -35,9 +36,17 @@ const ProductForm: React.FC<ProductFormProps> = ({ product, onSubmit, onClose })
     if (product) {
       const existingImages = product.images || [];
       setFormData({
-        ...product,
-        category_id: product.category?.id || '',
+        name: product.name,
+        description: product.description,
+        price: product.price,
+        category_id: product.category?.id || product.category_id || '',
         images: existingImages,
+        sizes: product.sizes || [''],
+        colors: product.colors || [''],
+        gender: (product.category_id as 'homme' | 'femme' | 'unisexe') || 'unisexe',
+        stock_quantity: product.stock_quantity || 0,
+        is_featured: !!product.is_featured,
+        created_at: product.created_at || new Date().toISOString(),
       });
       setImagePreviews(existingImages);
     } else {
@@ -83,7 +92,7 @@ const ProductForm: React.FC<ProductFormProps> = ({ product, onSubmit, onClose })
       // This check is for newly added File objects
       try {
         return URL.createObjectURL(image) !== imageUrlToRemove;
-      } catch (error) {
+      } catch {
         return true; // Keep if it's not a blob URL
       }
     });
@@ -110,14 +119,32 @@ const ProductForm: React.FC<ProductFormProps> = ({ product, onSubmit, onClose })
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    const submissionData: Product = {
-      ...formData,
-      id: product?.id || `new-${Date.now()}`,
-      images: imagePreviews,
-      category: mockCategories.find(c => c.id === formData.category_id),
-      created_at: product?.created_at || new Date().toISOString(),
-    };
-    onSubmit(submissionData);
+    // Build multipart FormData matching backend API
+    const data = new FormData();
+    data.append('name', formData.name.trim());
+    data.append('description', formData.description.trim());
+    const price = isNaN(Number(formData.price)) ? 0 : Number(formData.price);
+    data.append('price', String(price));
+    // Backend expects category as 'homme' | 'femme' | 'unisexe'
+    data.append('category', formData.gender || 'unisexe');
+    // colors as array of objects, convert from strings
+    const colorsArr = (formData.colors || []).filter(Boolean).map((c) => ({ name: c, code: c }));
+    data.append('colors', JSON.stringify(colorsArr));
+    // sizes as array of strings
+    const allowedSizes = ['XS','S','M','L','XL','XXL'];
+    const sizesClean = (formData.sizes || []).filter((s) => !!s && allowedSizes.includes(s));
+    data.append('sizes', JSON.stringify(sizesClean));
+    const stock = Number.isFinite(Number(formData.stock_quantity)) ? parseInt(String(formData.stock_quantity), 10) : 0;
+    data.append('stock', String(stock));
+    data.append('is_featured', String(!!formData.is_featured));
+    data.append('is_new', 'true');
+    // Append image files only (ignore existing URLs)
+    (formData.images || []).forEach((img) => {
+      if (img instanceof File) {
+        data.append('images', img);
+      }
+    });
+    onSubmit(data);
   };
 
   return (

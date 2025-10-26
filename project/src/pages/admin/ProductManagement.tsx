@@ -1,19 +1,72 @@
 import React, { useState } from 'react';
-import { mockProducts, mockCategories } from '../../lib/mockData';
 import type { Product } from '../../types';
 import { Plus, Edit, Trash2 } from 'lucide-react';
 import Modal from '../../components/Modal';
 import ProductForm from './ProductForm';
+import { products as productsApi } from '../../services/api';
 
 const ProductManagement: React.FC = () => {
-  const [products, setProducts] = useState<Product[]>(mockProducts);
+  const [products, setProducts] = useState<Product[]>([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
 
+  const API_HOST = 'http://localhost:5000';
+
+  const mapFromBackend = React.useCallback((p: BackendProduct): Product => {
+    return {
+      id: p._id,
+      name: p.name,
+      description: p.description,
+      price: p.price,
+      category_id: p.category,
+      category: { id: p.category, name: p.category, image_url: '', created_at: p.createdAt },
+      images: Array.isArray(p.images) ? p.images.map((img) => `${API_HOST}${img.url}`) : [],
+      sizes: p.sizes || [],
+      colors: Array.isArray(p.colors) ? p.colors.map((c) => (typeof c === 'string' ? c : c.name || c.code || '')) : [],
+      stock_quantity: p.stock ?? 0,
+      is_featured: !!p.is_featured,
+      created_at: p.createdAt,
+      rating: 5,
+    };
+  }, [API_HOST]);
+
+  React.useEffect(() => {
+    const load = async () => {
+      try {
+        const data: BackendProduct[] = await productsApi.getAll();
+        const mapped: Product[] = (data || []).map((p) => mapFromBackend(p));
+        setProducts(mapped);
+      } catch (e) {
+        console.error('Failed to load products', e);
+      }
+    };
+    load();
+  }, [mapFromBackend]);
+
+  type BackendImage = { url: string; alt?: string };
+  type BackendColor = { name?: string; code?: string } | string;
+  type BackendProduct = {
+    _id: string;
+    name: string;
+    description: string;
+    price: number;
+    category: string;
+    colors?: BackendColor[];
+    sizes?: string[];
+    images?: BackendImage[];
+    stock?: number;
+    is_featured?: boolean;
+    createdAt: string;
+  };
+
+  
+
   const handleDelete = (productId: string) => {
     if (window.confirm('Êtes-vous sûr de vouloir supprimer ce produit ?')) {
+      // Optimistic UI
+      const prev = products;
       setProducts(products.filter(p => p.id !== productId));
-      // In a real app, you would also make an API call to delete the product from the database.
+      productsApi.delete(productId).catch(() => setProducts(prev));
     }
   };
 
@@ -27,24 +80,23 @@ const ProductManagement: React.FC = () => {
     setEditingProduct(null);
   };
 
-  const handleFormSubmit = (formData: Omit<Product, 'id' | 'created_at'>) => {
-    if (editingProduct) {
-      // Update existing product
-      const updatedProducts = products.map(p =>
-        p.id === editingProduct.id ? { ...p, ...formData, category: mockCategories.find(c => c.id === formData.category_id) } : p
-      );
-      setProducts(updatedProducts);
-    } else {
-      // Add new product
-      const newProduct: Product = {
-        id: (Math.random() * 10000).toString(), // Temporary ID
-        created_at: new Date().toISOString(),
-        ...formData,
-        category: mockCategories.find(c => c.id === formData.category_id),
-      };
-      setProducts([newProduct, ...products]);
+  const handleFormSubmit = async (data: FormData) => {
+    try {
+      if (editingProduct) {
+        const updated = await productsApi.update(editingProduct.id, data);
+        const mapped = mapFromBackend(updated);
+        setProducts((prev) => prev.map((p) => (p.id === mapped.id ? mapped : p)));
+      } else {
+        const created = await productsApi.create(data);
+        const mapped = mapFromBackend(created);
+        setProducts((prev) => [mapped, ...prev]);
+      }
+      handleCloseModal();
+    } catch (e: any) {
+      console.error('Save product failed', e);
+      const msg = e?.response?.data?.message || e?.message || 'Erreur lors de la sauvegarde du produit';
+      alert(msg);
     }
-    handleCloseModal();
   };
 
   return (

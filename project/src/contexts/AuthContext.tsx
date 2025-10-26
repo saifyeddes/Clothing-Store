@@ -1,77 +1,72 @@
-import React, { createContext, useContext, useState } from 'react';
-import { mockUser } from '../lib/mockData';
-import type { User } from '../types';
+import React, { createContext, useContext, useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { auth } from '../services/api';
+
+interface User {
+  id: string;
+  email: string;
+  role: string;
+  full_name: string;
+}
 
 interface AuthContextType {
   user: User | null;
-  loading: boolean;
   signIn: (email: string, password: string) => Promise<void>;
-  signUp: (email: string, password: string, fullName: string) => Promise<void>;
-  signOut: () => Promise<void>;
+  signOut: () => void;
+  loading: boolean;
 }
 
-const AuthContext = createContext<AuthContextType | undefined>(undefined);
-
-export const useAuth = () => {
-  const context = useContext(AuthContext);
-  if (context === undefined) {
-    throw new Error('useAuth must be used within an AuthProvider');
-  }
-  return context;
-};
+const AuthContext = createContext<AuthContextType | null>(null);
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    const userInfo = localStorage.getItem('userInfo');
+    if (userInfo) {
+      setUser(JSON.parse(userInfo));
+    }
+    setLoading(false);
+  }, []);
 
   const signIn = async (email: string, password: string) => {
-    setLoading(true);
-    // Simulate API call
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    
-    // Check for admin credentials
-    if (email === 'admin@room.tn' && password === 'admin@room.tn') {
-      setUser({ 
-        ...mockUser, 
-        email: 'admin@room.tn',
-        role: 'admin',
-        full_name: 'Admin'
-      });
-    } else {
-      throw new Error('Email ou mot de passe incorrect');
+    try {
+      const response = await auth.login(email, password);
+      const { token, user } = response;
+      
+      localStorage.setItem('userInfo', JSON.stringify(user));
+      localStorage.setItem('token', token);
+      
+      setUser(user);
+      
+      // Redirection après connexion réussie
+      navigate('/admin/dashboard');
+    } catch (error) {
+      console.error('Login failed:', error);
+      throw new Error('Échec de la connexion');
     }
-    setLoading(false);
   };
 
-  const signUp = async (email: string, password: string, fullName: string) => {
-    setLoading(true);
-    // Simulate API call
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    
-    // Mock registration
-    if (email && password && fullName) {
-      setUser({
-        ...mockUser,
-        email,
-        full_name: fullName
-      });
-    } else {
-      throw new Error('Tous les champs sont requis');
-    }
-    setLoading(false);
-  };
-
-  const signOut = async () => {
+  const signOut = () => {
+    localStorage.removeItem('userInfo');
+    localStorage.removeItem('token');
     setUser(null);
+    navigate('/admin');
   };
 
-  const value = {
-    user,
-    loading,
-    signIn,
-    signUp,
-    signOut,
-  };
+  return (
+    <AuthContext.Provider value={{ user, signIn, signOut, loading }}>
+      {!loading && children}
+    </AuthContext.Provider>
+  );
+};
 
-  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
+export const useAuth = () => {
+  const context = useContext(AuthContext);
+  if (!context) {
+    throw new Error('useAuth must be used within an AuthProvider');
+  }
+  return context;
 };

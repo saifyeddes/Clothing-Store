@@ -3,7 +3,6 @@ import { Link, useNavigate } from 'react-router-dom';
 import { ArrowRight } from 'lucide-react';
 import { mockProducts } from '../lib/mockData';
 import ProductCard from '../components/ProductCard';
-import Testimonials from '../components/Testimonials';
 import { useCart } from '../contexts/CartContext';
 import type { Product } from '../types';
 import toast, { Toaster } from 'react-hot-toast';
@@ -289,9 +288,6 @@ const Home: React.FC = () => {
           </div>
         </div>
       </section>
-
-      {/* Testimonials Section */}
-      <Testimonials />
 
       {/* Newsletter Section */}
       {/* <section className="py-16 bg-gray-900 text-white">

@@ -1,7 +1,7 @@
-import { useMemo, useState, useEffect, useRef } from 'react';
+import { useMemo, useState, useEffect, Fragment } from 'react';
 import { useParams, useSearchParams, useNavigate } from 'react-router-dom';
-import { X } from 'lucide-react';
-import { SlidersHorizontal, Filter as FilterIcon } from 'lucide-react';
+import { X, Filter as FilterIcon, Check } from 'lucide-react';
+import { Dialog, Transition } from '@headlessui/react';
 import { mockProducts } from '../lib/mockData';
 import ProductCard from '../components/ProductCard';
 import { useCart } from '../contexts/CartContext';
@@ -21,29 +21,40 @@ const CategoryPage: React.FC = () => {
   
   const { addToCart } = useCart();
   
-  const [sortBy, setSortBy] = useState('name');
+  const [sortBy] = useState('name');
   const [priceRange, setPriceRange] = useState([0, 200]);
   const [selectedColors, setSelectedColors] = useState<string[]>([]);
   const [selectedSizes, setSelectedSizes] = useState<string[]>([]);
-  const [isFilterOpen, setIsFilterOpen] = useState(false);
-  const [isMobile, setIsMobile] = useState(false);
-  const filterContentRef = useRef<HTMLDivElement>(null);
+  // State for filter modal
+  const [isFilterModalOpen, setIsFilterModalOpen] = useState(false);
+  const [tempSelectedColors, setTempSelectedColors] = useState<string[]>([]);
+  const [tempSelectedSizes, setTempSelectedSizes] = useState<string[]>([]);
+  const [tempPriceRange, setTempPriceRange] = useState([0, 200]);
+
+  // Initialize temp filters when opening the modal
+  const openFilterModal = () => {
+    setTempSelectedColors([...selectedColors]);
+    setTempSelectedSizes([...selectedSizes]);
+    setTempPriceRange([...priceRange]);
+    setIsFilterModalOpen(true);
+  };
+
+  // Apply filters from modal
+  const applyFilters = () => {
+    setSelectedColors(tempSelectedColors);
+    setSelectedSizes(tempSelectedSizes);
+    setPriceRange(tempPriceRange);
+    setIsFilterModalOpen(false);
+  };
+
+  // Reset all filters
+  const resetAllFilters = () => {
+    setTempSelectedColors([]);
+    setTempSelectedSizes([]);
+    setTempPriceRange([0, 200]);
+  };
   
-  // Check if the device is mobile on component mount and window resize
-  useEffect(() => {
-    const checkIfMobile = () => {
-      setIsMobile(window.innerWidth < 1024); // 1024px is the lg breakpoint in Tailwind
-    };
-    
-    // Initial check
-    checkIfMobile();
-    
-    // Add event listener for window resize
-    window.addEventListener('resize', checkIfMobile);
-    
-    // Cleanup
-    return () => window.removeEventListener('resize', checkIfMobile);
-  }, []);
+  // Remove unused mobile detection
 
 
   // Mettre à jour l'état des filtres lorsque les paramètres d'URL changent
@@ -181,15 +192,10 @@ const CategoryPage: React.FC = () => {
     window.history.replaceState({}, '', newUrl);
   }, [selectedColors, selectedSizes, priceRange]);
 
-  const resetFilters = () => {
-    setSortBy('name');
-    setPriceRange([0, 200]);
-    setSelectedColors([]);
-    setSelectedSizes([]);
-  };
+  // Remove unused resetFilters function
 
   return (
-    <div className="min-h-screen bg-gray-50 pb-24 relative">
+    <div className="min-h-screen bg-gray-50 pb-24">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header */}
         <div className="mb-8 pt-8">
@@ -260,218 +266,172 @@ const CategoryPage: React.FC = () => {
         </div>
       </div>
 
-      {/* Single Filter Button - Visible on all devices but styled differently */}
-      <div className={`fixed bottom-6 ${isMobile ? 'left-1/2 transform -translate-x-1/2' : 'right-6'} z-50`}>
+      {/* Single Filter Button - Visible on all devices */}
+      <div className="fixed bottom-6 right-6 z-50">
         <button
-          onClick={() => setIsFilterOpen(true)}
-          className={`flex items-center justify-center ${
-            isMobile 
-              ? 'px-5 py-2.5 bg-gradient-to-r from-yellow-500 to-yellow-600 hover:from-yellow-600 hover:to-yellow-700 text-white font-medium rounded-full shadow-lg hover:shadow-xl focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:ring-offset-2 transition-all duration-200 transform hover:scale-105 active:scale-95'
-              : 'p-3 bg-yellow-500 hover:bg-yellow-600 text-white rounded-full shadow-lg transition-colors'
-          }`}
+          onClick={openFilterModal}
+          className="flex items-center justify-center p-3 bg-yellow-500 hover:bg-yellow-600 text-white rounded-full shadow-lg transition-colors"
         >
-          {isMobile ? (
-            <>
-              <SlidersHorizontal className="h-4 w-4 mr-2" />
-              <span className="text-sm">Filtrer</span>
-              {activeFilterCount > 0 && (
-                <span className="ml-2 inline-flex items-center justify-center min-w-5 h-5 text-xs font-bold text-yellow-600 bg-white rounded-full border-2 border-white shadow-sm">
-                  {activeFilterCount}
-                </span>
-              )}
-            </>
-          ) : (
-            <>
-              <SlidersHorizontal className="h-6 w-6" />
-              {activeFilterCount > 0 && (
-                <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center">
-                  {activeFilterCount}
-                </span>
-              )}
-            </>
+          <FilterIcon className="w-6 h-6" />
+          {activeFilterCount > 0 && (
+            <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center">
+              {activeFilterCount}
+            </span>
           )}
         </button>
       </div>
 
       {/* Filter Modal */}
-      {isFilterOpen && (
-        <div className="fixed inset-0 z-50 overflow-hidden">
-          <div className="absolute inset-0 bg-black/30" onClick={() => setIsFilterOpen(false)} />
-          
-          <div className="fixed inset-y-0 right-0 w-full max-w-md bg-white shadow-xl transform transition-transform duration-300 ease-in-out">
-            <div className="h-full flex flex-col">
-              {/* Header */}
-              <div className="flex items-center justify-between p-4 border-b">
-                <h3 className="text-lg font-medium">Filtres</h3>
-                <button 
-                  onClick={() => setIsFilterOpen(false)}
-                  className="text-gray-400 hover:text-gray-500"
-                >
-                  <X className="h-6 w-6" />
-                </button>
-              </div>
-              
-              {/* Scrollable content */}
-              <div 
-                ref={filterContentRef}
-                className="flex-1 overflow-y-auto p-4 space-y-6"
-              >
-                {/* Sort by */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Trier par</label>
-                  <select
-                    value={sortBy}
-                    onChange={(e) => setSortBy(e.target.value)}
-                    className="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-md"
-                  >
-                    <option value="name">Nom (A-Z)</option>
-                    <option value="price-low">Prix croissant</option>
-                    <option value="price-high">Prix décroissant</option>
-                  </select>
-                </div>
+      <Transition appear show={isFilterModalOpen} as={Fragment}>
+        <Dialog as="div" className="fixed inset-0 z-50 overflow-y-auto" onClose={() => setIsFilterModalOpen(false)}>
+          <div className="min-h-screen px-4 text-center">
+            <Transition.Child
+              as={Fragment}
+              enter="ease-out duration-300"
+              enterFrom="opacity-0"
+              enterTo="opacity-100"
+              leave="ease-in duration-200"
+              leaveFrom="opacity-100"
+              leaveTo="opacity-0"
+            >
+              <div className="fixed inset-0 bg-black/50" />
+            </Transition.Child>
 
-                {/* Price Range */}
-                <div className="bg-gray-50 p-4 rounded-xl">
-                  <h3 className="font-semibold text-gray-800 mb-4 flex items-center">
-                    <svg className="w-4 h-4 mr-2 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                    </svg>
-                    Fourchette de prix
-                  </h3>
-                  <div className="space-y-4">
-                    <div className="relative">
+            {/* This element is to trick the browser into centering the modal contents. */}
+            <span className="inline-block h-screen align-middle" aria-hidden="true">
+              &#8203;
+            </span>
+            <Transition.Child
+              as={Fragment}
+              enter="ease-out duration-300"
+              enterFrom="opacity-0 scale-95"
+              enterTo="opacity-100 scale-100"
+              leave="ease-in duration-200"
+              leaveFrom="opacity-100 scale-100"
+              leaveTo="opacity-0 scale-95"
+            >
+              <div className="inline-block w-full max-w-md p-6 my-8 overflow-hidden text-left align-middle transition-all transform bg-white shadow-xl rounded-2xl">
+                <Dialog.Title
+                  as="h3"
+                  className="text-lg font-medium leading-6 text-gray-900 flex justify-between items-center"
+                >
+                  <span>Filtres</span>
+                  <button
+                    type="button"
+                    className="text-gray-400 hover:text-gray-500"
+                    onClick={() => setIsFilterModalOpen(false)}
+                  >
+                    <X className="h-6 w-6" />
+                  </button>
+                </Dialog.Title>
+
+                <div className="mt-4 space-y-6">
+                  {/* Price Range */}
+                  <div>
+                    <h4 className="font-medium text-gray-900 mb-3">Prix</h4>
+                    <div className="px-2">
                       <input
                         type="range"
                         min="0"
                         max="200"
-                        value={priceRange[1]}
-                        onChange={(e) => setPriceRange([priceRange[0], parseInt(e.target.value)])}
-                        className="w-full h-2 bg-gradient-to-r from-yellow-200 to-yellow-400 rounded-full appearance-none cursor-pointer"
-                        style={{
-                          backgroundImage: `linear-gradient(to right, #FEF3C7 0%, #F59E0B ${(priceRange[1] / 200) * 100}%, #E5E7EB ${(priceRange[1] / 200) * 100}%, #E5E7EB 100%)`
-                        }}
+                        value={tempPriceRange[1]}
+                        onChange={(e) => setTempPriceRange([0, parseInt(e.target.value)])}
+                        className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"
                       />
-                      <div className="absolute top-0 h-2 w-full -z-10 bg-gray-200 rounded-full"></div>
-                    </div>
-                    <div className="flex items-center justify-between text-sm">
-                      <span className="px-3 py-1 bg-white border border-gray-200 rounded-lg shadow-sm">
-                        {priceRange[0]} TND
-                      </span>
-                      <span className="text-gray-500">à</span>
-                      <span className="px-3 py-1 bg-yellow-100 text-yellow-800 font-medium border border-yellow-200 rounded-lg shadow-sm">
-                        {priceRange[1]} TND
-                      </span>
+                      <div className="flex justify-between text-sm text-gray-500 mt-2">
+                        <span>0 TND</span>
+                        <span>{tempPriceRange[1]} TND</span>
+                      </div>
                     </div>
                   </div>
-                </div>
 
-                {/* Colors */}
-                <div className="bg-gray-50 p-4 rounded-xl">
-                  <h3 className="font-semibold text-gray-800 mb-4 flex items-center">
-                    <svg className="w-4 h-4 mr-2 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.486M7 17h.01" />
-                    </svg>
-                    Couleurs
-                  </h3>
-                  <div className="grid grid-cols-2 gap-3">
-                    {allColors.map(color => {
-                      const isSelected = selectedColors.includes(color);
-                      return (
-                        <label 
-                          key={color} 
-                          className={`flex items-center p-3 rounded-lg border-2 transition-all cursor-pointer ${
-                            isSelected 
-                              ? 'border-yellow-400 bg-yellow-50' 
-                              : 'border-gray-200 hover:border-gray-300 bg-white'
+                  {/* Colors */}
+                  <div>
+                    <h4 className="font-medium text-gray-900 mb-3">Couleurs</h4>
+                    <div className="grid grid-cols-4 gap-2">
+                      {allColors.map((color) => (
+                        <button
+                          key={color}
+                          onClick={() => {
+                            setTempSelectedColors(prev =>
+                              prev.includes(color)
+                                ? prev.filter(c => c !== color)
+                                : [...prev, color]
+                            );
+                          }}
+                          className={`flex items-center justify-center p-2 rounded-md border ${
+                            tempSelectedColors.includes(color)
+                              ? 'ring-2 ring-yellow-500 ring-offset-2'
+                              : 'border-gray-200'
                           }`}
+                          style={{ backgroundColor: getColorCode(color) }}
+                          title={color}
                         >
-                          <div 
-                            className={`w-5 h-5 rounded-full mr-3 border ${
-                              isSelected ? 'ring-2 ring-offset-1 ring-yellow-400' : ''
-                            }`}
-                            style={{ backgroundColor: getColorCode(color) }}
-                          ></div>
-                          <span className="text-sm font-medium text-gray-700">{color}</span>
-                          <input
-                            type="checkbox"
-                            checked={isSelected}
-                            onChange={(e) => {
-                              if (e.target.checked) {
-                                setSelectedColors([...selectedColors, color]);
-                              } else {
-                                setSelectedColors(selectedColors.filter(c => c !== color));
-                              }
-                            }}
-                            className="sr-only"
-                          />
-                        </label>
-                      );
-                    })}
+                          {tempSelectedColors.includes(color) && (
+                            <Check className="h-4 w-4 text-white" />
+                          )}
+                        </button>
+                      ))}
+                    </div>
                   </div>
-                </div>
 
-                {/* Sizes */}
-                <div className="bg-gray-50 p-4 rounded-xl">
-                  <h3 className="font-semibold text-gray-800 mb-4 flex items-center">
-                    <svg className="w-4 h-4 mr-2 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 4v12l-4-2-4 2V4M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                    </svg>
-                    Tailles disponibles
-                  </h3>
-                  <div className="grid grid-cols-4 gap-2">
-                    {allSizes.map(size => {
-                      const isSelected = selectedSizes.includes(size);
-                      return (
+                  {/* Sizes */}
+                  <div>
+                    <h4 className="font-medium text-gray-900 mb-3">Tailles</h4>
+                    <div className="flex flex-wrap gap-2">
+                      {allSizes.map((size) => (
                         <button
                           key={size}
                           onClick={() => {
-                            if (isSelected) {
-                              setSelectedSizes(selectedSizes.filter(s => s !== size));
-                            } else {
-                              setSelectedSizes([...selectedSizes, size]);
-                            }
+                            setTempSelectedSizes(prev =>
+                              prev.includes(size)
+                                ? prev.filter(s => s !== size)
+                                : [...prev, size]
+                            );
                           }}
-                          className={`p-3 text-sm font-medium rounded-lg transition-all transform hover:scale-105 ${
-                            isSelected
-                              ? 'bg-yellow-100 text-yellow-800 border-2 border-yellow-400 shadow-md'
-                              : 'bg-white text-gray-700 border-2 border-gray-200 hover:border-yellow-300 hover:bg-yellow-50'
+                          className={`px-3 py-1.5 text-sm rounded-md border ${
+                            tempSelectedSizes.includes(size)
+                              ? 'bg-yellow-600 text-white border-yellow-600'
+                              : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
                           }`}
                         >
                           {size}
                         </button>
-                      );
-                    })}
+                      ))}
+                    </div>
+                  </div>
+                </div>
+
+                <div className="mt-6 flex justify-between">
+                  <button
+                    type="button"
+                    onClick={resetAllFilters}
+                    className="text-sm font-medium text-yellow-600 hover:text-yellow-700"
+                  >
+                    Réinitialiser
+                  </button>
+                  <div className="space-x-3">
+                    <button
+                      type="button"
+                      onClick={() => setIsFilterModalOpen(false)}
+                      className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50"
+                    >
+                      Annuler
+                    </button>
+                    <button
+                      type="button"
+                      onClick={applyFilters}
+                      className="px-4 py-2 text-sm font-medium text-white bg-yellow-600 border border-transparent rounded-md hover:bg-yellow-700"
+                    >
+                      Appliquer
+                    </button>
                   </div>
                 </div>
               </div>
-
-              {/* Footer */}
-              <div className="sticky bottom-0 bg-white border-t border-gray-100 p-4 shadow-[0_-4px_20px_-5px_rgba(0,0,0,0.05)]">
-                <div className="flex gap-3">
-                  <button
-                    onClick={resetFilters}
-                    className="flex-1 px-4 py-3.5 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-xl transition-all duration-200 flex items-center justify-center"
-                  >
-                    <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-                    </svg>
-                    Tout effacer
-                  </button>
-                  <button
-                    onClick={() => setIsFilterOpen(false)}
-                    className="flex-1 px-4 py-3.5 text-sm font-medium text-white bg-gradient-to-r from-yellow-500 to-yellow-600 hover:from-yellow-600 hover:to-yellow-700 rounded-xl transition-all duration-200 flex items-center justify-center shadow-lg hover:shadow-xl active:scale-95"
-                  >
-                    <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                    </svg>
-                    Voir {sortedProducts.length} article{sortedProducts.length > 1 ? 's' : ''}
-                  </button>
-                </div>
-              </div>
-            </div>
+            </Transition.Child>
           </div>
-        </div>
-      )}
+        </Dialog>
+      </Transition>
     </div>
   );
 };

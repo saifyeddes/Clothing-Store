@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { ShoppingCart, Heart as HeartIcon, HeartOff as HeartOffIcon } from 'lucide-react';
 import type { Product } from '../types';
@@ -15,10 +15,55 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, onAddToCart }) => {
   const [isFavorited, setIsFavorited] = useState(false);
   const [isAnimating, setIsAnimating] = useState(false);
 
+  const [currentImageIndex, setCurrentImageIndex] = useState(0);
+  const [isHovering, setIsHovering] = useState(false);
+  const hoverTimeout = useRef<NodeJS.Timeout | null>(null);
+  const isTouchDevice = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+
   // Check if product is in favorites on component mount
   useEffect(() => {
     setIsFavorited(isFavorite(product.id));
+    return () => {
+      if (hoverTimeout.current) clearTimeout(hoverTimeout.current);
+    };
   }, [product.id, isFavorite]);
+
+  const getRandomImageIndex = (currentIndex: number, total: number) => {
+    if (total <= 1) return 0;
+    let newIndex;
+    do {
+      newIndex = Math.floor(Math.random() * total);
+    } while (newIndex === currentIndex && total > 1);
+    return newIndex;
+  };
+
+  const handleMouseEnter = () => {
+    if (product.images.length <= 1) return;
+    
+    if (hoverTimeout.current) clearTimeout(hoverTimeout.current);
+    
+    // Démarrer immédiatement avec une image aléatoire
+    setCurrentImageIndex(prev => getRandomImageIndex(prev, product.images.length));
+    setIsHovering(true);
+    
+    // Configurer la rotation automatique
+    startImageRotation();
+  };
+
+  const handleMouseLeave = () => {
+    if (hoverTimeout.current) clearTimeout(hoverTimeout.current);
+    setIsHovering(false);
+    setCurrentImageIndex(0);
+  };
+
+  const startImageRotation = () => {
+    if (product.images.length <= 1 || !isHovering) return;
+    
+    hoverTimeout.current = setTimeout(() => {
+      setCurrentImageIndex(prev => getRandomImageIndex(prev, product.images.length));
+      startImageRotation();
+    }, 1500); // Changement plus rapide pour un effet plus dynamique
+  };
 
   const handleFavoriteClick = (e: React.MouseEvent) => {
     e.preventDefault();
@@ -74,13 +119,51 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, onAddToCart }) => {
   return (
     <div className="group relative bg-white rounded-3xl shadow-sm overflow-hidden hover:shadow-md transition-all duration-300 transform hover:-translate-y-1">
       {/* Image */}
-      <div className="aspect-[3/4] overflow-hidden bg-gray-100">
+      <div 
+        className="relative aspect-[3/4] overflow-hidden bg-gray-100"
+        onMouseEnter={!isTouchDevice ? handleMouseEnter : undefined}
+        onMouseLeave={!isTouchDevice ? handleMouseLeave : undefined}
+        onTouchStart={isTouchDevice ? handleMouseEnter : undefined}
+        onTouchEnd={isTouchDevice ? handleMouseLeave : undefined}
+      >
         <Link to={`/product/${product.id}`} className="block w-full h-full" aria-label={`Voir les détails pour ${product.name}`}>
-          <img
-            src={product.images[0] || 'https://images.pexels.com/photos/996329/pexels-photo-996329.jpeg'}
-            alt={product.name}
-            className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
-          />
+          {product.images.length > 0 ? (
+            <>
+              {/* Image principale */}
+              <img
+                src={product.images[0]}
+                alt={product.name}
+                className="w-full h-full object-cover transition-opacity duration-500"
+                style={{
+                  opacity: isHovering ? 0 : 1,
+                  transition: 'opacity 0.5s ease-in-out',
+                  position: 'absolute',
+                  top: 0,
+                  left: 0
+                }}
+              />
+              
+              {/* Image secondaire (affichée au survol) */}
+              {isHovering && product.images.length > 1 && (
+                <img
+                  src={product.images[currentImageIndex]}
+                  alt={`${product.name} - Vue alternative`}
+                  className="w-full h-full object-cover"
+                  style={{
+                    position: 'absolute',
+                    top: 0,
+                    left: 0
+                  }}
+                />
+              )}
+            </>
+          ) : (
+            <img
+              src="https://images.pexels.com/photos/996329/pexels-photo-996329.jpeg"
+              alt={product.name}
+              className="w-full h-full object-cover"
+            />
+          )}
         </Link>
       </div>
 

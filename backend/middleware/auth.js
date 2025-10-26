@@ -14,9 +14,13 @@ module.exports = (req, res, next) => {
     // Vérifier le token
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
     
-    // Vérifier le rôle admin
-    if (decoded.role !== 'admin') {
+    // Vérifier le rôle admin ou super_admin
+    if (decoded.role !== 'admin' && decoded.role !== 'super_admin') {
       return res.status(403).json({ message: 'Accès non autorisé' });
+    }
+    // Si l'utilisateur n'est pas approuvé (pourrait arriver si on encode isApproved dans le token)
+    if (decoded.role === 'admin' && decoded.isApproved === false) {
+      return res.status(403).json({ message: "Compte admin en attente d'approbation" });
     }
     
     // Ajouter les informations de l'utilisateur à la requête

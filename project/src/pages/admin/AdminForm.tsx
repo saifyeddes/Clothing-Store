@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import type { User } from '../../types';
+import { useAuth } from '../../contexts/AuthContext';
 
 interface AdminFormProps {
   admin: User | null;
@@ -8,12 +9,14 @@ interface AdminFormProps {
 }
 
 const AdminForm: React.FC<AdminFormProps> = ({ admin, onSubmit, onClose }) => {
+  const { user: currentUser } = useAuth();
   const [formData, setFormData] = useState({
     full_name: '',
     email: '',
     password: '',
     role: 'admin' as User['role'],
   });
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     if (admin) {
@@ -40,15 +43,29 @@ const AdminForm: React.FC<AdminFormProps> = ({ admin, onSubmit, onClose }) => {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    const dataToSubmit = { ...formData };
-    if (!dataToSubmit.password) {
-      delete (dataToSubmit as any).password; // Don't submit empty password
+    setError(null);
+    if (!admin) {
+      if (!formData.password || formData.password.length < 6) {
+        setError('Le mot de passe doit contenir au moins 6 caractères');
+        return;
+      }
     }
-    onSubmit(dataToSubmit);
+    // Prevent non super_admin from setting super_admin role
+    const payload = { ...formData } as any;
+    if (currentUser?.role !== 'super_admin') {
+      payload.role = 'admin';
+    }
+    if (!payload.password) {
+      delete payload.password; // Don't submit empty password
+    }
+    onSubmit(payload);
   };
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
+      {error && (
+        <div className="p-2 rounded bg-red-100 text-red-700 text-sm">{error}</div>
+      )}
       <div>
         <label htmlFor="full_name" className="block text-sm font-medium text-gray-700">Nom complet</label>
         <input
@@ -97,7 +114,9 @@ const AdminForm: React.FC<AdminFormProps> = ({ admin, onSubmit, onClose }) => {
           className="mt-1 block w-full px-3 py-2 border border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
         >
           <option value="admin">Admin</option>
-          <option value="super_admin">Super Admin</option>
+          {currentUser?.role === 'super_admin' && (
+            <option value="super_admin">Super Admin</option>
+          )}
         </select>
       </div>
       <div className="flex justify-end space-x-3 pt-4">

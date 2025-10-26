@@ -1,23 +1,48 @@
-import React, { useState } from 'react';
-import { mockAdmins } from '../../lib/mockData';
+import React, { useEffect, useState } from 'react';
 import type { User } from '../../types';
-import { Plus, Edit, Trash2 } from 'lucide-react';
+import { Plus, Edit, Trash2, CheckCircle2, XCircle } from 'lucide-react';
 import Modal from '../../components/Modal';
 import AdminForm from './AdminForm';
+import { adminUsers } from '../../services/api';
+import { useAuth } from '../../contexts/AuthContext';
 
 const UserManagement: React.FC = () => {
-  const [admins, setAdmins] = useState<User[]>(mockAdmins);
+  interface AdminUser extends User { isApproved?: boolean }
+  const [admins, setAdmins] = useState<AdminUser[]>([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [editingAdmin, setEditingAdmin] = useState<User | null>(null);
+  const [editingAdmin, setEditingAdmin] = useState<AdminUser | null>(null);
+  const { user: currentUser } = useAuth();
+
+  const mapFromBackend = (u: any): AdminUser => ({
+    id: u._id,
+    email: u.email,
+    full_name: u.full_name,
+    role: u.role,
+    created_at: u.createdAt,
+    isApproved: u.isApproved,
+  });
+
+  useEffect(() => {
+    const load = async () => {
+      try {
+        const data = await adminUsers.list();
+        setAdmins((data || []).map(mapFromBackend));
+      } catch (e) {
+        console.error('Failed to load admins', e);
+      }
+    };
+    load();
+  }, []);
 
   const handleDelete = (adminId: string) => {
     if (window.confirm('Êtes-vous sûr de vouloir supprimer cet administrateur ?')) {
+      const prev = admins;
       setAdmins(admins.filter(a => a.id !== adminId));
-      // In a real app, you would also make an API call to delete the admin.
+      adminUsers.delete(adminId).catch(() => setAdmins(prev));
     }
   };
 
-  const handleOpenModal = (admin: User | null = null) => {
+  const handleOpenModal = (admin: AdminUser | null = null) => {
     setEditingAdmin(admin);
     setIsModalOpen(true);
   };
@@ -27,23 +52,42 @@ const UserManagement: React.FC = () => {
     setEditingAdmin(null);
   };
 
-  const handleFormSubmit = (formData: Omit<User, 'id' | 'created_at'>) => {
-    if (editingAdmin) {
-      // Update existing admin
-      const updatedAdmins = admins.map(a =>
-        a.id === editingAdmin.id ? { ...a, ...formData } : a
-      );
-      setAdmins(updatedAdmins);
-    } else {
-      // Add new admin
-      const newAdmin: User = {
-        id: `admin-${Date.now()}`,
-        created_at: new Date().toISOString(),
-        ...formData,
-      };
-      setAdmins([newAdmin, ...admins]);
+  const handleFormSubmit = async (formData: Partial<User> & { password?: string; role?: User['role'] }) => {
+    try {
+      if (editingAdmin) {
+        const updated = await adminUsers.update(editingAdmin.id, {
+          full_name: formData.full_name!,
+          email: formData.email!,
+          role: formData.role as any,
+        });
+        const mapped = mapFromBackend(updated);
+        setAdmins(prev => prev.map(a => (a.id === mapped.id ? mapped : a)));
+      } else {
+        const created = await adminUsers.create({
+          full_name: formData.full_name!,
+          email: formData.email!,
+          password: formData.password!,
+          role: (formData.role as any) || 'admin',
+        });
+        const mapped = mapFromBackend(created);
+        setAdmins(prev => [mapped, ...prev]);
+      }
+      handleCloseModal();
+    } catch (e: any) {
+      const msg = e?.response?.data?.message || e?.message || 'Erreur lors de la sauvegarde';
+      alert(msg);
     }
-    handleCloseModal();
+  };
+
+  const handleApprove = async (adminId: string) => {
+    try {
+      const updated = await adminUsers.approve(adminId);
+      const mapped = mapFromBackend(updated);
+      setAdmins(prev => prev.map(a => (a.id === mapped.id ? mapped : a)));
+    } catch (e: any) {
+      const msg = e?.response?.data?.message || e?.message || "Erreur lors de l'approbation";
+      alert(msg);
+    }
   };
 
   const getRoleBadge = (role: User['role']) => {
@@ -72,6 +116,7 @@ const UserManagement: React.FC = () => {
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Nom</th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Email</th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Rôle</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Statut</th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date de création</th>
               <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
             </tr>
@@ -86,14 +131,36 @@ const UserManagement: React.FC = () => {
                     {admin.role}
                   </span>
                 </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">{new Date(admin.created_at).toLocaleDateString()}</td>
+                <td className="px-6 py-4 whitespace-nowrap text-sm">
+                  {admin.isApproved ? (
+                    <span className="inline-flex items-center text-green-700"><CheckCircle2 className="h-4 w-4 mr-1" />Approuvé</span>
+                  ) : (
+                    <span className="inline-flex items-center text-yellow-700">En attente</span>
+                  )}
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
+                  {currentUser?.role === 'super_admin' && !admin.isApproved ? (
+                    <div className="flex items-center space-x-3">
+                      <button onClick={() => handleApprove(admin.id)} className="text-green-600 hover:text-green-800" title="Accepter">
+                        <CheckCircle2 className="h-5 w-5" />
+                      </button>
+                      <button onClick={() => handleDelete(admin.id)} className="text-red-600 hover:text-red-800" title="Refuser">
+                        <XCircle className="h-5 w-5" />
+                      </button>
+                    </div>
+                  ) : (
+                    new Date(admin.created_at).toLocaleDateString()
+                  )}
+                </td>
                 <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                   <button onClick={() => handleOpenModal(admin)} className="text-indigo-600 hover:text-indigo-900 mr-4">
                     <Edit className="h-5 w-5" />
                   </button>
-                  <button onClick={() => handleDelete(admin.id)} className="text-red-600 hover:text-red-900">
-                    <Trash2 className="h-5 w-5" />
-                  </button>
+                  {currentUser?.role === 'super_admin' && admin.email !== 'admin@room.tn' && (
+                    <button onClick={() => handleDelete(admin.id)} className="text-red-600 hover:text-red-900">
+                      <Trash2 className="h-5 w-5" />
+                    </button>
+                  )}
                 </td>
               </tr>
             ))}
@@ -114,6 +181,13 @@ const UserManagement: React.FC = () => {
               </div>
               <p className="text-sm text-gray-600">{admin.email}</p>
             </div>
+            <div className="text-sm">
+              {admin.isApproved ? (
+                <span className="inline-flex items-center text-green-700"><CheckCircle2 className="h-4 w-4 mr-1" />Approuvé</span>
+              ) : (
+                <span className="inline-flex items-center text-yellow-700">En attente</span>
+              )}
+            </div>
             <div className="text-sm text-gray-500">
               <span>Membre depuis: </span>
               <span>{new Date(admin.created_at).toLocaleDateString()}</span>
@@ -122,16 +196,28 @@ const UserManagement: React.FC = () => {
               <button onClick={() => handleOpenModal(admin)} className="text-indigo-600 hover:text-indigo-900">
                 <Edit className="h-5 w-5" />
               </button>
-              <button onClick={() => handleDelete(admin.id)} className="text-red-600 hover:text-red-900">
-                <Trash2 className="h-5 w-5" />
-              </button>
+              {currentUser?.role === 'super_admin' && !admin.isApproved && (
+                <button onClick={() => handleApprove(admin.id)} className="text-green-600 hover:text-green-800">
+                  <CheckCircle2 className="h-5 w-5" />
+                </button>
+              )}
+              {currentUser?.role === 'super_admin' && !admin.isApproved && (
+                <button onClick={() => handleDelete(admin.id)} className="text-red-600 hover:text-red-800" title="Refuser la demande">
+                  <XCircle className="h-5 w-5" />
+                </button>
+              )}
+              {currentUser?.role === 'super_admin' && admin.email !== 'admin@room.tn' && (
+                <button onClick={() => handleDelete(admin.id)} className="text-red-600 hover:text-red-900">
+                  <Trash2 className="h-5 w-5" />
+                </button>
+              )}
             </div>
           </div>
         ))}
       </div>
 
       <Modal isOpen={isModalOpen} onClose={handleCloseModal} title={editingAdmin ? 'Modifier l\'Admin' : 'Ajouter un Admin'}>
-        <AdminForm admin={editingAdmin} onSubmit={handleFormSubmit} onClose={handleCloseModal} />
+        <AdminForm admin={editingAdmin as any} onSubmit={handleFormSubmit} onClose={handleCloseModal} />
       </Modal>
     </div>
   );

@@ -17,16 +17,21 @@ const createAdmin = async () => {
     const existingAdmin = await User.findOne({ email: 'admin@room.tn' });
     
     if (existingAdmin) {
-      console.log('Un administrateur existe déjà avec cet email');
+      // Upgrade existing account to super_admin and approve it
+      existingAdmin.role = 'super_admin';
+      existingAdmin.isApproved = true;
+      await existingAdmin.save();
+      console.log('Compte admin@room.tn mis à niveau en super_admin et approuvé.');
       process.exit(0);
     }
     
-    // Créer un nouvel admin
+    // Créer le super admin par défaut
     const admin = new User({
       email: 'admin@room.tn',
       password: 'admin@room.tn', // À changer après la première connexion
-      full_name: 'Administrateur',
-      role: 'admin'
+      full_name: 'Super Administrateur',
+      role: 'super_admin',
+      isApproved: true,
     });
     
     // Le mot de passe sera automatiquement hashé par le middleware pre-save
@@ -35,6 +40,7 @@ const createAdmin = async () => {
     console.log('Administrateur créé avec succès:');
     console.log('Email: admin@room.tn');
     console.log('Mot de passe: admin@room.tn');
+  console.log('Rôle: super_admin');
     console.log('\n⚠️ IMPORTANT: Changez ce mot de passe après votre première connexion !');
     
     process.exit(0);

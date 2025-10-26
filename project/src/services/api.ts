@@ -69,4 +69,27 @@ export const products = {
   },
 };
 
+export const adminUsers = {
+  list: async () => {
+    const res = await api.get('/admin/users');
+    return res.data;
+  },
+  create: async (payload: { full_name: string; email: string; password?: string; role?: 'admin' | 'super_admin' }) => {
+    const res = await api.post('/admin/users', payload);
+    return res.data;
+  },
+  update: async (id: string, payload: Partial<{ full_name: string; email: string; role: 'admin' | 'super_admin'; isApproved: boolean }>) => {
+    const res = await api.put(`/admin/users/${id}`, payload);
+    return res.data;
+  },
+  approve: async (id: string) => {
+    const res = await api.post(`/admin/users/${id}/approve`);
+    return res.data;
+  },
+  delete: async (id: string) => {
+    const res = await api.delete(`/admin/users/${id}`);
+    return res.data;
+  },
+};
+
 export default api;

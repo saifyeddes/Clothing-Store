@@ -7,6 +7,7 @@ const path = require('path');
 // Import des routes
 const productRoutes = require('./routes/products');
 const authRoutes = require('./routes/auth');
+const adminUsersRoutes = require('./routes/adminUsers');
 
 const app = express();
 
@@ -26,6 +27,7 @@ mongoose.connect(process.env.MONGODB_URI, {
 // Routes
 app.use('/api/products', productRoutes);
 app.use('/api/auth', authRoutes);
+app.use('/api/admin/users', adminUsersRoutes);
 
 // Gestion des erreurs
 app.use((err, req, res, next) => {

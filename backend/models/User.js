@@ -21,8 +21,13 @@ const userSchema = new mongoose.Schema({
   },
   role: {
     type: String,
-    enum: ['admin', 'user'],
+    enum: ['super_admin', 'admin', 'user'],
     default: 'user'
+  },
+  // For admin accounts that require approval by super_admin
+  isApproved: {
+    type: Boolean,
+    default: true,
   },
   createdAt: {
     type: Date,

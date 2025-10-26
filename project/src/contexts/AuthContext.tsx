@@ -7,6 +7,7 @@ interface User {
   email: string;
   role: string;
   full_name: string;
+  isApproved?: boolean;
 }
 
 interface AuthContextType {

@@ -3,7 +3,7 @@ const User = require('../models/User');
 
 const generateToken = (user) => {
   return jwt.sign(
-    { id: user._id, email: user.email, role: user.role },
+    { id: user._id, email: user.email, role: user.role, isApproved: user.isApproved },
     process.env.JWT_SECRET,
     { expiresIn: '24h' }
   );
@@ -25,9 +25,12 @@ exports.login = async (req, res) => {
       return res.status(401).json({ message: 'Email ou mot de passe incorrect' });
     }
 
-    // Vérifier le rôle admin
-    if (user.role !== 'admin') {
+    // Autoriser admin et super_admin; bloquer admin non approuvé
+    if (user.role !== 'admin' && user.role !== 'super_admin') {
       return res.status(403).json({ message: 'Accès non autorisé' });
+    }
+    if (user.role === 'admin' && user.isApproved === false) {
+      return res.status(403).json({ message: "Compte admin en attente d'approbation" });
     }
 
     // Générer le token JWT
@@ -40,7 +43,8 @@ exports.login = async (req, res) => {
         id: user._id,
         email: user.email,
         full_name: user.full_name,
-        role: user.role
+        role: user.role,
+        isApproved: user.isApproved
       }
     });
   } catch (error) {

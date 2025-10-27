@@ -8,6 +8,7 @@ const path = require('path');
 const productRoutes = require('./routes/products');
 const authRoutes = require('./routes/auth');
 const adminUsersRoutes = require('./routes/adminUsers');
+const orderRoutes = require('./routes/orders');
 
 const app = express();
 
@@ -28,6 +29,7 @@ mongoose.connect(process.env.MONGODB_URI, {
 app.use('/api/products', productRoutes);
 app.use('/api/auth', authRoutes);
 app.use('/api/admin/users', adminUsersRoutes);
+app.use('/api/orders', orderRoutes);
 
 // Gestion des erreurs
 app.use((err, req, res, next) => {

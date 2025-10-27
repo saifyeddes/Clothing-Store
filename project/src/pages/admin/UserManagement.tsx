@@ -27,7 +27,7 @@ const UserManagement: React.FC = () => {
       try {
         const data = await adminUsers.list();
         setAdmins((data || []).map(mapFromBackend));
-      } catch (e) {
+      } catch {
         console.error('Failed to load admins', e);
       }
     };
@@ -90,6 +90,37 @@ const UserManagement: React.FC = () => {
     }
   };
 
+  const handleApproveAll = async () => {
+    if (currentUser?.role !== 'super_admin') return;
+    const pending = admins.filter(a => !a.isApproved);
+    if (pending.length === 0) return;
+    try {
+      const results = await Promise.allSettled(pending.map(a => adminUsers.approve(a.id)));
+      const approvedIds = results
+        .map((r, i) => (r.status === 'fulfilled' ? pending[i].id : null))
+        .filter(Boolean) as string[];
+      setAdmins(prev => prev.map(a => (approvedIds.includes(a.id) ? { ...a, isApproved: true } : a)));
+    } catch {
+      alert("Erreur lors de l'approbation en masse");
+    }
+  };
+
+  const handleRefuseAll = async () => {
+    if (currentUser?.role !== 'super_admin') return;
+    const pending = admins.filter(a => !a.isApproved && a.email !== 'admin@room.tn');
+    if (pending.length === 0) return;
+    if (!window.confirm('Confirmer la suppression de tous les admins en attente ?')) return;
+    try {
+      const results = await Promise.allSettled(pending.map(a => adminUsers.delete(a.id)));
+      const deletedIds = results
+        .map((r, i) => (r.status === 'fulfilled' ? pending[i].id : null))
+        .filter(Boolean) as string[];
+      setAdmins(prev => prev.filter(a => !deletedIds.includes(a.id)));
+    } catch {
+      alert('Erreur lors du refus en masse');
+    }
+  };
+
   const getRoleBadge = (role: User['role']) => {
     switch (role) {
       case 'super_admin': return 'bg-red-200 text-red-800';
@@ -102,10 +133,22 @@ const UserManagement: React.FC = () => {
     <div className="bg-gray-50 min-h-screen">
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-3xl font-bold text-gray-800">Gérer les Admins</h1>
-        <button onClick={() => handleOpenModal()} className="bg-blue-600 text-white px-4 py-2 rounded-lg shadow hover:bg-blue-700 transition flex items-center">
-          <Plus className="h-5 w-5 mr-2" />
-          Ajouter un admin
-        </button>
+        <div className="flex items-center space-x-2">
+          {currentUser?.role === 'super_admin' && (
+            <>
+              <button onClick={handleApproveAll} className="bg-green-600 text-white px-3 py-2 rounded-lg shadow hover:bg-green-700 transition">
+                Accepter tous
+              </button>
+              <button onClick={handleRefuseAll} className="bg-red-600 text-white px-3 py-2 rounded-lg shadow hover:bg-red-700 transition">
+                Refuser tous
+              </button>
+            </>
+          )}
+          <button onClick={() => handleOpenModal()} className="bg-blue-600 text-white px-4 py-2 rounded-lg shadow hover:bg-blue-700 transition flex items-center">
+            <Plus className="h-5 w-5 mr-2" />
+            Ajouter un admin
+          </button>
+        </div>
       </div>
 
       {/* Desktop Table View */}

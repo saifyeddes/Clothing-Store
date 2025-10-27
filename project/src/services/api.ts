@@ -46,9 +46,50 @@ export const auth = {
   },
 };
 
+export const adminStats = {
+  get: async () => {
+    const res = await api.get('/admin/stats');
+    return res.data as { ordersCount: number; productsCount: number; totalRevenue: number };
+  },
+};
+
+export const orders = {
+  create: async (payload: {
+    user_email: string;
+    user_full_name: string;
+    items: Array<{ product_id: string; name: string; size: string; color: string; quantity: number; price: number }>;
+    shipping_address: string;
+    phone: string;
+  }) => {
+    const res = await api.post('/orders', payload);
+    return res.data;
+  },
+  list: async () => {
+    const res = await api.get('/orders');
+    return res.data;
+  },
+  approve: async (id: string) => {
+    const res = await api.post(`/orders/${id}/approve`);
+    return res.data;
+  },
+  reject: async (id: string) => {
+    const res = await api.post(`/orders/${id}/reject`);
+    return res.data;
+  },
+  pdfUrl: (id: string) => `${API_URL}/orders/${id}/pdf`,
+  downloadPdf: async (id: string) => {
+    const res = await api.get(`/orders/${id}/pdf`, { responseType: 'blob' });
+    return res.data as Blob;
+  },
+};
+
 export const products = {
   getAll: async (params?: Record<string, unknown>) => {
     const res = await api.get('/products', { params });
+    return res.data;
+  },
+  getBest: async (limit?: number) => {
+    const res = await api.get('/products/best', { params: { limit } });
     return res.data;
   },
   create: async (formData: FormData) => {

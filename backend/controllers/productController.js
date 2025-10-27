@@ -1,6 +1,7 @@
 const Product = require('../models/Product');
 const path = require('path');
 const fs = require('fs');
+const Order = require('../models/Order');
 
 // Configuration de multer pour le téléchargement d'images
 const multer = require('multer');
@@ -42,6 +43,39 @@ exports.uploadImages = (req, res, next) => {
     }
     next();
   });
+};
+
+// Meilleures ventes basées sur les commandes (somme des quantités)
+exports.getBestSellers = async (req, res) => {
+  try {
+    const limit = parseInt(req.query.limit, 10) || 12;
+    // Agréger les commandes pour compter les ventes par product_id
+    const top = await Order.aggregate([
+      { $unwind: '$items' },
+      { $group: { _id: '$items.product_id', totalSold: { $sum: '$items.quantity' } } },
+      { $sort: { totalSold: -1 } },
+      { $limit: limit },
+    ]);
+
+    const ids = top.map(t => t._id);
+    if (ids.length === 0) {
+      return res.json([]);
+    }
+
+    // Récupérer les produits correspondants
+    const products = await Product.find({ _id: { $in: ids } });
+    // Ordonner comme l'agrégation
+    const orderMap = new Map(top.map(t => [String(t._id), t.totalSold]));
+    const sorted = products
+      .map(p => ({ p, sold: orderMap.get(String(p._id)) || 0 }))
+      .sort((a, b) => b.sold - a.sold)
+      .map(x => x.p);
+
+    res.json(sorted);
+  } catch (error) {
+    console.error('Erreur lors de la récupération des best sellers:', error);
+    res.status(500).json({ message: 'Erreur lors de la récupération des best sellers' });
+  }
 };
 
 // Créer un nouveau produit

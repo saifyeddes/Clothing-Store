@@ -24,6 +24,7 @@ const CategoryPage: React.FC = () => {
   const [tempSelectedColors, setTempSelectedColors] = useState<string[]>([]);
   const [tempSelectedSizes, setTempSelectedSizes] = useState<string[]>([]);
   const [tempPriceRange, setTempPriceRange] = useState([0, 200]);
+  const [maxPrice, setMaxPrice] = useState(200);
 
   // Initialize temp filters when opening the modal
   const openFilterModal = () => {
@@ -100,6 +101,12 @@ const CategoryPage: React.FC = () => {
           rating: 5,
         }));
         setFetchedProducts(mapped);
+        // Update max price and widen default filters to include all
+        const newMax = Math.max(200, ...mapped.map(m => m.price));
+        setMaxPrice(newMax);
+        // If priceRange is still the initial [0,200], expand it to [0,newMax]
+        setPriceRange(prev => (prev[0] === 0 && prev[1] === 200 ? [0, newMax] : prev));
+        setTempPriceRange(prev => (prev[0] === 0 && prev[1] === 200 ? [0, newMax] : prev));
       } catch (e) {
         console.error('Failed to load products', e);
       }
@@ -197,39 +204,41 @@ const CategoryPage: React.FC = () => {
     return colorMap[colorName] || '#CCCCCC';
   };
 
-  // Get all unique colors and sizes for filters
-  const allColors = useMemo(() => {
+  // Options dynamiques du modal: ne montrer que couleurs/tailles disponibles selon filtres temporaires
+  const availableColors = useMemo(() => {
     const colors = new Set<string>();
-    filteredProducts.forEach((product: Product) => {
-      if (product.colors) {
-        product.colors.forEach((color: string) => colors.add(color));
-      }
-    });
+    const withinPrice = (p: Product) => p.price >= 0 && p.price <= (tempPriceRange?.[1] ?? maxPrice);
+    const sizeMatch = (p: Product) =>
+      tempSelectedSizes.length === 0 || p.sizes?.some((s) => tempSelectedSizes.includes(s));
+    filteredProducts
+      .filter((p) => withinPrice(p) && sizeMatch(p))
+      .forEach((p) => p.colors?.forEach((c) => colors.add(c)));
     return Array.from(colors).sort();
-  }, [filteredProducts]);
+  }, [filteredProducts, tempPriceRange, tempSelectedSizes, maxPrice]);
 
-  const allSizes = useMemo(() => {
+  const availableSizes = useMemo(() => {
     const sizes = new Set<string>();
-    filteredProducts.forEach((product: Product) => {
-      if (product.sizes) {
-        product.sizes.forEach((size: string) => sizes.add(size));
-      }
-    });
+    const withinPrice = (p: Product) => p.price >= 0 && p.price <= (tempPriceRange?.[1] ?? maxPrice);
+    const colorMatch = (p: Product) =>
+      tempSelectedColors.length === 0 || p.colors?.some((c) => tempSelectedColors.includes(c));
+    filteredProducts
+      .filter((p) => withinPrice(p) && colorMatch(p))
+      .forEach((p) => p.sizes?.forEach((s) => sizes.add(s)));
     return Array.from(sizes).sort();
-  }, [filteredProducts]);
+  }, [filteredProducts, tempPriceRange, tempSelectedColors, maxPrice]);
 
   // Count active filters
   const activeFilterCount = 
     (selectedColors.length > 0 ? 1 : 0) + 
     (selectedSizes.length > 0 ? 1 : 0) + 
-    (priceRange[1] < 200 ? 1 : 0);
+    (priceRange[1] < maxPrice ? 1 : 0);
     
   // Update URL with filters
   useEffect(() => {
     const params = new URLSearchParams();
     if (selectedColors.length > 0) params.set('colors', selectedColors.join(','));
     if (selectedSizes.length > 0) params.set('sizes', selectedSizes.join(','));
-    if (priceRange[1] < 200) params.set('price', `${priceRange[0]}-${priceRange[1]}`);
+    if (priceRange[1] < maxPrice) params.set('price', `${priceRange[0]}-${priceRange[1]}`);
     
     const newUrl = `${window.location.pathname}?${params.toString()}`;
     window.history.replaceState({}, '', newUrl);
@@ -376,7 +385,7 @@ const CategoryPage: React.FC = () => {
                       <input
                         type="range"
                         min="0"
-                        max="200"
+                        max={maxPrice}
                         value={tempPriceRange[1]}
                         onChange={(e) => setTempPriceRange([0, parseInt(e.target.value)])}
                         className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"
@@ -392,7 +401,7 @@ const CategoryPage: React.FC = () => {
                   <div>
                     <h4 className="font-medium text-gray-900 mb-3">Couleurs</h4>
                     <div className="grid grid-cols-4 gap-2">
-                      {allColors.map((color) => (
+                      {availableColors.map((color) => (
                         <button
                           key={color}
                           onClick={() => {
@@ -422,7 +431,7 @@ const CategoryPage: React.FC = () => {
                   <div>
                     <h4 className="font-medium text-gray-900 mb-3">Tailles</h4>
                     <div className="flex flex-wrap gap-2">
-                      {allSizes.map((size) => (
+                      {availableSizes.map((size) => (
                         <button
                           key={size}
                           onClick={() => {

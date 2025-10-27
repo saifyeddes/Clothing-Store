@@ -3,9 +3,11 @@ const router = express.Router();
 const auth = require('../middleware/auth');
 const ctrl = require('../controllers/ordersController');
 
-// Protect all order routes
-router.use(auth);
+// Public: create order from storefront
+router.post('/', ctrl.create);
 
+// Protected: list/manage orders and PDF
+router.use(auth);
 router.get('/', ctrl.list);
 router.post('/:id/approve', ctrl.approve);
 router.post('/:id/reject', ctrl.reject);

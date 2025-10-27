@@ -5,6 +5,7 @@ const auth = require('../middleware/auth');
 
 // Routes publiques
 router.get('/', productController.getAllProducts);
+router.get('/best', productController.getBestSellers);
 router.get('/:id', productController.getProductById);
 
 // Routes protégées (admin)

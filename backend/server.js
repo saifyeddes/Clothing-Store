@@ -9,6 +9,7 @@ const productRoutes = require('./routes/products');
 const authRoutes = require('./routes/auth');
 const adminUsersRoutes = require('./routes/adminUsers');
 const orderRoutes = require('./routes/orders');
+const adminStatsRoutes = require('./routes/adminStats');
 
 const app = express();
 
@@ -30,6 +31,7 @@ app.use('/api/products', productRoutes);
 app.use('/api/auth', authRoutes);
 app.use('/api/admin/users', adminUsersRoutes);
 app.use('/api/orders', orderRoutes);
+app.use('/api/admin/stats', adminStatsRoutes);
 
 // Gestion des erreurs
 app.use((err, req, res, next) => {

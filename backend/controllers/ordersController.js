@@ -1,6 +1,61 @@
 const Order = require('../models/Order');
 const PDFDocument = require('pdfkit');
 
+// POST /api/orders
+exports.create = async (req, res) => {
+  try {
+    const {
+      user_email,
+      user_full_name,
+      items,
+      shipping_address,
+      phone,
+    } = req.body;
+
+    if (!user_email || !user_full_name || !shipping_address || !phone) {
+      return res.status(400).json({ message: 'Champs requis manquants (nom, email, téléphone, adresse)' });
+    }
+
+    if (!Array.isArray(items) || items.length === 0) {
+      return res.status(400).json({ message: 'Aucun article dans la commande' });
+    }
+
+    for (const it of items) {
+      if (!it || !it.product_id || !it.name) {
+        return res.status(400).json({ message: 'Article invalide: product_id et name requis' });
+      }
+      if (Number.isNaN(Number(it.price)) || Number.isNaN(Number(it.quantity))) {
+        return res.status(400).json({ message: 'Article invalide: price et quantity doivent être numériques' });
+      }
+    }
+
+    const total_amount = items.reduce((sum, it) => sum + (Number(it.price) * Number(it.quantity)), 0);
+
+    const order = await Order.create({
+      user_email,
+      user_full_name,
+      items: items.map(it => ({
+        product_id: it.product_id,
+        name: it.name,
+        size: (it.size && String(it.size).trim()) ? it.size : 'Standard',
+        color: (it.color && String(it.color).trim()) ? it.color : 'N/A',
+        quantity: Number(it.quantity) || 1,
+        price: Number(it.price) || 0,
+      })),
+      total_amount,
+      shipping_address,
+      phone,
+      status: 'pending',
+    });
+
+    res.status(201).json(order);
+  } catch (err) {
+    console.error('orders.create error', err);
+    const msg = err?.message || 'Erreur du serveur';
+    res.status(500).json({ message: msg });
+  }
+};
+
 // GET /api/orders
 exports.list = async (req, res) => {
   try {

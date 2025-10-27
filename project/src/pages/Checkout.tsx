@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { MapPin, Phone, User, Mail, CreditCard, Check } from 'lucide-react';
 import { useCart } from '../contexts/CartContext';
 import { useAuth } from '../contexts/AuthContext';
+import { orders as ordersApi } from '../services/api';
 
 const Checkout: React.FC = () => {
   const { items, totalPrice, clearCart } = useCart();
@@ -41,13 +42,32 @@ const Checkout: React.FC = () => {
     e.preventDefault();
     setLoading(true);
 
-    // Simulate order processing
-    await new Promise(resolve => setTimeout(resolve, 2000));
+    try {
+      const payload = {
+        user_email: formData.email,
+        user_full_name: formData.fullName,
+        items: items.map((it) => ({
+          product_id: it.product_id,
+          name: it.product.name,
+          size: it.size,
+          color: it.color,
+          quantity: it.quantity,
+          price: it.product.price,
+        })),
+        shipping_address: `${formData.address}, ${formData.city} ${formData.postalCode}`,
+        phone: formData.phone,
+      };
 
-    // Clear cart and show success
-    clearCart();
-    setOrderPlaced(true);
-    setLoading(false);
+      await ordersApi.create(payload);
+
+      clearCart();
+      setOrderPlaced(true);
+    } catch (err) {
+      console.error('Order submit failed', err);
+      alert("Impossible d'enregistrer la commande. Réessayez.");
+    } finally {
+      setLoading(false);
+    }
   };
 
   if (items.length === 0 && !orderPlaced) {

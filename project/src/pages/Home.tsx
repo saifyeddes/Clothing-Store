@@ -63,16 +63,10 @@ const Home: React.FC = () => {
   useEffect(() => {
     const load = async () => {
       try {
-        const [featuredRes, newRes]: [BackendProduct[], BackendProduct[]] = await Promise.all([
-          productsApi.getAll({ featured: true }),
-          productsApi.getAll({ new: true }),
-        ]);
-        const merged = [...(featuredRes || []), ...(newRes || [])];
-        const byId = new Map<string, BackendProduct>();
-        merged.forEach((p) => byId.set(p._id, p));
-        setFeaturedProducts(Array.from(byId.values()).map(mapFromBackend));
+        const best: BackendProduct[] = await productsApi.getBest(12);
+        setFeaturedProducts((best || []).map(mapFromBackend));
       } catch (e) {
-        console.error('Failed to load featured products', e);
+        console.error('Failed to load best sellers', e);
       }
     };
     load();

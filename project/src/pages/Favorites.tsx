@@ -3,20 +3,24 @@ import { Link } from 'react-router-dom';
 import { Heart as HeartIcon, HeartOff, ArrowLeft } from 'lucide-react';
 import ProductCard from '../components/ProductCard';
 import { useFavorites } from '../contexts/FavoritesContext';
-import { mockProducts } from '../lib/mockData';
-import { showToast } from '../components/ToastNotification';
+import { useCart } from '../contexts/CartContext';
+import type { Product } from '../types';
 
 const Favorites: React.FC = () => {
   const { favorites, removeFromFavorites } = useFavorites();
-  
-  // Get full product details for each favorite
-  const favoriteProducts = mockProducts.filter(product => 
-    favorites.some(fav => fav.id === product.id)
-  );
+  const { addToCart } = useCart();
+
+  // Afficher directement les produits favoris stockés dans le contexte
+  const favoriteProducts = favorites;
 
   const handleRemoveFromFavorites = (productId: string) => {
     removeFromFavorites(productId);
-    showToast('Produit retiré des favoris', 'info');
+  };
+
+  const handleAddToCart = (product: Product) => {
+    const size = product.sizes?.[0] || '';
+    const color = product.colors?.[0] || '';
+    addToCart(product, size, color, 1);
   };
 
   return (
@@ -61,7 +65,7 @@ const Favorites: React.FC = () => {
               <div key={product.id} className="relative group">
                 <ProductCard 
                   product={product} 
-                  onAddToCart={() => {}}
+                  onAddToCart={handleAddToCart}
                 />
                 <button
                   onClick={() => handleRemoveFromFavorites(product.id)}

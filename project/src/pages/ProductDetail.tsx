@@ -32,10 +32,8 @@ const ProductDetail: React.FC = () => {
     
     if (isFavorited) {
       removeFromFavorites(product.id);
-      showToast('Produit retiré des favoris', 'info');
     } else {
       addToFavorites(product);
-      showToast('Produit ajouté aux favoris', 'success');
     }
     
     setIsFavorited(!isFavorited);
@@ -84,10 +82,6 @@ const ProductDetail: React.FC = () => {
       return;
     }
     addToCart(product, selectedSize, selectedColor, quantity);
-    showToast(
-      `${product.name} ajouté au panier ! (Taille: ${selectedSize} | Couleur: ${selectedColor})`,
-      'success'
-    );
   };
 
   const getColorStyle = (color: string) => {

@@ -5,7 +5,7 @@ import ProductCard from '../components/ProductCard';
 import { useCart } from '../contexts/CartContext';
 import type { Product } from '../types';
 import { products as productsApi, ASSETS_BASE } from '../services/api';
-import toast, { Toaster } from 'react-hot-toast';
+ 
 
 
 // 10 high-quality fashion images for the carousel
@@ -94,21 +94,9 @@ const Home: React.FC = () => {
   // search handled in Header; removing unused local handler
 
   const handleQuickAddToCart = (product: Product) => {
-    const defaultSize = product.sizes[0];
-    const defaultColor = product.colors[0];
+    const defaultSize = product.sizes?.[0] || '';
+    const defaultColor = product.colors?.[0] || '';
     addToCart(product, defaultSize, defaultColor, 1);
-    toast.success('Produit ajouté au panier !', {
-      duration: 2000,
-      position: 'bottom-center',
-      style: {
-        background: '#4CAF50',
-        color: '#fff',
-        padding: '12px 24px',
-        borderRadius: '4px',
-        fontSize: '14px',
-        fontWeight: 500,
-      },
-    });
   };
 
   const goToSlide = (index: number) => {
@@ -118,7 +106,7 @@ const Home: React.FC = () => {
 
   return (
     <div className="min-h-screen">
-      <Toaster />
+      
       {/* Hero Section with Carousel */}
       <section 
         className="relative h-screen flex items-center justify-center bg-black overflow-hidden -mt-16"

@@ -5,7 +5,6 @@ import { Dialog, Transition } from '@headlessui/react';
 import ProductCard from '../components/ProductCard';
 import { useCart } from '../contexts/CartContext';
 import type { Product } from '../types';
-import { showToast } from '../components/ToastNotification';
 import { products as productsApi, ASSETS_BASE } from '../services/api';
 
 const CategoryPage: React.FC = () => {
@@ -158,10 +157,9 @@ const CategoryPage: React.FC = () => {
   }, [finalProducts, sortBy]);
 
   const handleQuickAddToCart = (product: Product) => {
-    const defaultSize = product.sizes[0];
-    const defaultColor = product.colors[0];
+    const defaultSize = product.sizes?.[0] || '';
+    const defaultColor = product.colors?.[0] || '';
     addToCart(product, defaultSize, defaultColor, 1);
-    showToast(`${product.name} ajouté au panier !`, 'success');
   };
 
   const getCategoryTitle = () => {

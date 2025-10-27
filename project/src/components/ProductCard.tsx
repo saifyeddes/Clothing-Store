@@ -3,7 +3,6 @@ import { Link } from 'react-router-dom';
 import { ShoppingCart, Heart as HeartIcon, HeartOff as HeartOffIcon } from 'lucide-react';
 import type { Product } from '../types';
 import { useFavorites } from '../contexts/FavoritesContext';
-import { showToast } from './ToastNotification';
 
 interface ProductCardProps {
   product: Product;
@@ -73,10 +72,8 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, onAddToCart }) => {
     
     if (isFavorited) {
       removeFromFavorites(product.id);
-      showToast('Produit retiré des favoris', 'info');
     } else {
       addToFavorites(product);
-      showToast('Produit ajouté aux favoris', 'success');
     }
     
     setIsFavorited(!isFavorited);

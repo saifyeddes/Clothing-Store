@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { ShoppingCart, Star, Truck, Shield, RotateCcw, Heart, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useCart } from '../contexts/CartContext';
@@ -15,8 +15,8 @@ const ProductDetail: React.FC = () => {
   const [isFavorited, setIsFavorited] = useState(false);
   const [isAnimating, setIsAnimating] = useState(false);
   const [loading, setLoading] = useState(true);
-  const [product, setProduct] = useState<Product | null>(null);
-  const [related, setRelated] = useState<Product[]>([]);
+  const [product, setProduct] = useState<Omit<Product, 'gender'> & { gender?: string } | null>(null);
+  const [related, setRelated] = useState<Array<Omit<Product, 'gender'> & { gender?: string }>>([]);
 
   type BackendImage = { url: string; alt?: string };
   type BackendColor = { name?: string; code?: string } | string;
@@ -77,54 +77,66 @@ const ProductDetail: React.FC = () => {
     load();
   }, [id, isFavorite]);
 
+  // Fonction pour mapper un produit du backend vers le format frontend
+  const mapBackendToProduct = useCallback((p: BackendProduct): Omit<Product, 'gender'> & { gender?: string } => ({
+    id: p._id,
+    name: p.name,
+    description: p.description,
+    price: p.price,
+    category_id: p.category || 'uncategorized',
+    category: { 
+      id: p.category || 'uncategorized', 
+      name: p.category || 'Non catégorisé', 
+      image_url: '', 
+      created_at: p.createdAt 
+    },
+    images: Array.isArray(p.images) ? p.images.map((img) => `${ASSETS_BASE}${img.url}`) : [],
+    sizes: Array.isArray(p.sizes) ? p.sizes : [],
+    colors: Array.isArray(p.colors) 
+      ? p.colors.map((c) => (typeof c === 'string' ? c : c.name || c.code || '')) 
+      : [],
+    stock_quantity: p.stock ?? 0,
+    is_featured: !!p.is_featured,
+    created_at: p.createdAt,
+    rating: 5,
+    gender: (p as any).gender || 'unisex' // Ajout d'une valeur par défaut pour le genre
+  }), []);
+
   // Charger les produits associés (même catégorie si dispo, sinon best-sellers)
   useEffect(() => {
     const loadRelated = async () => {
       try {
         if (product?.category_id) {
-          const data: BackendProduct[] = await productsApi.getAll({ category: product.category_id });
-          const items: Product[] = (data || []).filter((p) => p && p._id !== product.id).map((p) => ({
-            id: p._id,
-            name: p.name,
-            description: p.description,
-            price: p.price,
-            category_id: p.category,
-            category: p.category ? { id: p.category, name: p.category, image_url: '', created_at: p.createdAt } : undefined,
-            images: Array.isArray(p.images) ? p.images.map((img) => `${ASSETS_BASE}${img.url}`) : [],
-            sizes: p.sizes || [],
-            colors: Array.isArray(p.colors) ? p.colors.map((c) => (typeof c === 'string' ? c : c.name || c.code || '')) : [],
-            stock_quantity: p.stock ?? 0,
-            is_featured: !!p.is_featured,
-            created_at: p.createdAt,
-            rating: 5,
-          }));
-          setRelated(items.slice(0, 8));
+          // Charger les produits de la même catégorie
+          const data: BackendProduct[] = await productsApi.getAll({ 
+            category: product.category_id 
+          });
+          
+          const filteredData = Array.isArray(data) ? data : [];
+          const relatedItems: (Omit<Product, 'gender'> & { gender?: string })[] = filteredData
+            .filter((p): p is BackendProduct => p && p._id && p._id !== product?.id)
+            .map(mapBackendToProduct);
+            
+          setRelated(relatedItems.slice(0, 8));
         } else {
-          const best: BackendProduct[] = await productsApi.getBest(8);
-          const items: Product[] = (best || []).map((p) => ({
-            id: p._id,
-            name: p.name,
-            description: p.description,
-            price: p.price,
-            category_id: p.category,
-            category: p.category ? { id: p.category, name: p.category, image_url: '', created_at: p.createdAt } : undefined,
-            images: Array.isArray(p.images) ? p.images.map((img) => `${ASSETS_BASE}${img.url}`) : [],
-            sizes: p.sizes || [],
-            colors: Array.isArray(p.colors) ? p.colors.map((c) => (typeof c === 'string' ? c : c.name || c.code || '')) : [],
-            stock_quantity: p.stock ?? 0,
-            is_featured: !!p.is_featured,
-            created_at: p.createdAt,
-            rating: 5,
-          }));
-          setRelated(items);
+          // Si pas de catégorie, charger les meilleures ventes
+          const best = await productsApi.getBest(8);
+          const bestItems: (Omit<Product, 'gender'> & { gender?: string })[] = 
+            Array.isArray(best) 
+              ? best.map(mapBackendToProduct) 
+              : [];
+          setRelated(bestItems);
         }
       } catch (e) {
         console.error('Failed to load related products', e);
         setRelated([]);
       }
     };
-    if (product) loadRelated();
-  }, [product]);
+    
+    if (product) {
+      loadRelated();
+    }
+  }, [product, mapBackendToProduct]);
 
   // Check if product is in favorites on component mount
   useEffect(() => {
@@ -156,6 +168,34 @@ const ProductDetail: React.FC = () => {
   const [selectedColor, setSelectedColor] = useState('');
   const [quantity, setQuantity] = useState(1);
   const [selectedImage, setSelectedImage] = useState(0);
+
+  // Réinitialiser la sélection quand le produit change
+  useEffect(() => {
+    if (product) {
+      console.log('Product loaded:', product);
+      console.log('Available sizes:', product.sizes);
+      
+      // Sélectionner la première taille disponible si aucune n'est sélectionnée
+      if (product.sizes && product.sizes.length > 0) {
+        // Vérifier si la taille actuelle est toujours valide
+        if (!product.sizes.includes(selectedSize)) {
+          setSelectedSize(product.sizes[0]);
+          console.log('Default size selected:', product.sizes[0]);
+        }
+      } else {
+        setSelectedSize('');
+      }
+      
+      // Sélectionner la première couleur disponible si aucune n'est sélectionnée
+      if (product.colors && product.colors.length > 0) {
+        if (!selectedColor || !product.colors.includes(selectedColor)) {
+          setSelectedColor(product.colors[0]);
+        }
+      } else {
+        setSelectedColor('');
+      }
+    }
+  }, [product, selectedSize, selectedColor]);
 
   if (!loading && !product) {
     return (
@@ -373,23 +413,35 @@ const ProductDetail: React.FC = () => {
                 {/* Sélection de la taille */}
                 <div id="size-section" className="mb-6">
                   <h3 className="text-lg font-semibold text-gray-900 mb-3">
-                    Taille: {selectedSize ? <span className="text-yellow-600 font-bold">{selectedSize}</span> : <span className="text-red-500">Sélectionnez une taille</span>}
+                    Taille: {selectedSize ? (
+                      <span className="text-yellow-600 font-bold">{selectedSize}</span>
+                    ) : (
+                      <span className="text-red-500">Sélectionnez une taille</span>
+                    )}
                   </h3>
-                  <div className="flex flex-wrap gap-2">
-                    {product.sizes.map((size) => (
-                      <button
-                        key={size}
-                        onClick={() => setSelectedSize(size)}
-                        className={`px-4 py-2 border rounded-xl font-medium transition-all ${
-                          selectedSize === size
-                            ? 'border-yellow-600 bg-yellow-50 text-yellow-700 ring-2 ring-yellow-200 shadow-sm'
-                            : 'border-gray-300 text-gray-700 hover:border-gray-400 hover:bg-gray-50'
-                        }`}
-                      >
-                        {size}
-                      </button>
-                    ))}
-                  </div>
+                  {product.sizes && product.sizes.length > 0 ? (
+                    <div className="flex flex-wrap gap-2">
+                      {product.sizes.map((size) => (
+                        <button
+                          type="button"
+                          key={size}
+                          onClick={() => {
+                            console.log('Size selected:', size);
+                            setSelectedSize(size);
+                          }}
+                          className={`px-4 py-2 border rounded-xl font-medium transition-all ${
+                            selectedSize === size
+                              ? 'border-yellow-600 bg-yellow-50 text-yellow-700 ring-2 ring-yellow-200 shadow-sm'
+                              : 'border-gray-300 text-gray-700 hover:border-gray-400 hover:bg-gray-50'
+                          }`}
+                        >
+                          {size}
+                        </button>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="text-sm text-gray-500">Aucune taille disponible pour ce produit</p>
+                  )}
                 </div>
 
                 {/* Quantité */}

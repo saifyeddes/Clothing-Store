@@ -192,22 +192,45 @@ const CategoryPage: React.FC = () => {
   };
 
   // Map color names to their corresponding hex codes
-  const getColorCode = (colorName: string): string => {
+  const getColorCode = (color: string): string => {
+    // Vérifier si c'est déjà un code hexadécimal
+    const isHex = /^#([0-9A-Fa-f]{3}|[0-9A-Fa-f]{6})$/i.test(color);
+    if (isHex) return color;
+    
+    // Vérifier si c'est déjà une valeur RGB/RGBA
+    const isRgb = /^rgba?\(/i.test(color);
+    if (isRgb) return color;
+
+    // Mappage des noms de couleurs vers leurs codes hexadécimaux
     const colorMap: { [key: string]: string } = {
       'Noir': '#000000',
       'Blanc': '#FFFFFF',
-      'Bleu': '#3B82F6',
-      'Rouge': '#EF4444',
-      'Vert': '#10B981',
-      'Jaune': '#F59E0B',
-      'Rose': '#EC4899',
-      'Gris': '#9CA3AF',
-      'Marron': '#92400E',
-      'Beige': '#D1B48C',
-      'Orange': '#F97316',
-      'Violet': '#8B5CF6',
+      'Gris': '#808080',
+      'Marine': '#000080',
+      'Rouge': '#FF0000',
+      'Bleu': '#0000FF',
+      'Rose': '#FFC0CB',
+      'Lavande': '#E6E6FA',
+      'Jaune': '#FFFF00',
+      'Menthe': '#98FB98',
+      'Beige': '#F5F5DC',
+      'Vert': '#008000',
+      'Orange': '#FFA500',
+      'Violet': '#8A2BE2',
+      'Kaki': '#F0E68C',
+      'Marron': '#A52A2A',
+      'Bordeaux': '#800020'
     };
-    return colorMap[colorName] || '#CCCCCC';
+    
+    // Vérifier la couleur telle quelle
+    if (colorMap[color]) return colorMap[color];
+    
+    // Essayer avec la première lettre en majuscule et le reste en minuscules
+    const cap = color.charAt(0).toUpperCase() + color.slice(1).toLowerCase();
+    if (colorMap[cap]) return colorMap[cap];
+    
+    // Retourner une couleur par défaut si non trouvée
+    return '#CCCCCC';
   };
 
   // Options dynamiques du modal: ne montrer que couleurs/tailles disponibles selon filtres temporaires
@@ -452,30 +475,45 @@ const CategoryPage: React.FC = () => {
                   {/* Colors */}
                   <div>
                     <h4 className="font-medium text-gray-900 mb-3">Couleurs</h4>
-                    <div className="grid grid-cols-4 gap-2">
-                      {availableColors.map((color) => (
-                        <button
-                          key={color}
-                          onClick={() => {
-                            setTempSelectedColors(prev =>
-                              prev.includes(color)
-                                ? prev.filter(c => c !== color)
-                                : [...prev, color]
-                            );
-                          }}
-                          className={`flex items-center justify-center p-2 rounded-md border ${
-                            tempSelectedColors.includes(color)
-                              ? 'ring-2 ring-yellow-500 ring-offset-2'
-                              : 'border-gray-200'
-                          }`}
-                          style={{ backgroundColor: getColorCode(color) }}
-                          title={color}
-                        >
-                          {tempSelectedColors.includes(color) && (
-                            <Check className="h-4 w-4 text-white" />
-                          )}
-                        </button>
-                      ))}
+                    <div className="flex flex-wrap gap-3">
+                      {availableColors.map((color) => {
+                        const isSelected = tempSelectedColors.includes(color);
+                        const colorCode = getColorCode(color);
+                        
+                        return (
+                          <button
+                            key={color}
+                            type="button"
+                            onClick={() => {
+                              setTempSelectedColors(prev =>
+                                prev.includes(color)
+                                  ? prev.filter(c => c !== color)
+                                  : [...prev, color]
+                              );
+                            }}
+                            className={`relative w-10 h-10 rounded-full flex items-center justify-center transition-all duration-200 ${
+                              isSelected 
+                                ? 'ring-2 ring-offset-1 ring-yellow-500 scale-110' 
+                                : 'ring-1 ring-gray-200 hover:ring-2 hover:ring-gray-300'
+                            }`}
+                            style={{
+                              backgroundColor: colorCode,
+                              border: '2px solid white',
+                              boxShadow: '0 1px 2px rgba(0,0,0,0.1)'
+                            }}
+                            title={color}
+                            aria-label={`Filtrer par la couleur ${color}`}
+                          >
+                            {isSelected && (
+                              <Check 
+                                className={`h-4 w-4 ${color.toLowerCase() === 'blanc' ? 'text-gray-700' : 'text-white'}`} 
+                                strokeWidth={3}
+                              />
+                            )}
+                            <span className="sr-only">{color}</span>
+                          </button>
+                        );
+                      })}
                     </div>
                   </div>
 

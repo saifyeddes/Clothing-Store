@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { MapPin, Phone, User, Mail, CreditCard, Check, Clock, Package, Shield, Truck, MessageCircle } from 'lucide-react';
 import { useCart } from '../contexts/CartContext';
-import { useAuth } from '../contexts/AuthContext';
 import { orders as ordersApi, products as productsApi } from '../services/api';
 import { ASSETS_BASE } from '../services/api';
 
@@ -31,17 +30,16 @@ interface OrderDetails {
 
 const Checkout: React.FC = () => {
   const { items, totalPrice, clearCart } = useCart();
-  const { user } = useAuth();
   const navigate = useNavigate();
 
   const [formData, setFormData] = useState({
-    fullName: user?.full_name || '',
-    email: user?.email || '',
+    fullName: '', 
+    email: '',    
     phone: '',
     address: '',
     city: '',
     postalCode: '',
-    paymentMethod: 'cash'
+    paymentMethod: 'À la livraison' 
   });
 
   const [loading, setLoading] = useState(false);
@@ -474,19 +472,18 @@ const Checkout: React.FC = () => {
                   Mode de paiement *
                 </label>
                 <div className="relative">
-                  <select
-                    id="paymentMethod"
-                    name="paymentMethod"
-                    required
-                    value={formData.paymentMethod}
-                    onChange={handleChange}
-                    className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-transparent"
-                  >
-                    <option value="cash">Paiement à la livraison</option>
-                    <option value="card">Carte bancaire</option>
-                    <option value="transfer">Virement bancaire</option>
-                  </select>
-                  <CreditCard className="h-5 w-5 text-gray-400 absolute left-3 top-2.5" />
+                  <div className="relative">
+                    <input
+                      type="text"
+                      id="paymentMethod"
+                      name="paymentMethod"
+                      value="Paiement à la livraison"
+                      readOnly
+                      className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg bg-gray-50 text-gray-700 cursor-not-allowed"
+                    />
+                    <input type="hidden" name="paymentMethod" value="À la livraison" />
+                    <CreditCard className="h-5 w-5 text-gray-400 absolute left-3 top-2.5" />
+                  </div>
                 </div>
               </div>
 

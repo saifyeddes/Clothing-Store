@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Product } from '../../types';
-import { mockCategories } from '../../lib/mockData';
+import { X as XIcon } from 'lucide-react';
 
 interface ProductFormProps {
   product: Product | null;
@@ -8,23 +8,25 @@ interface ProductFormProps {
   onClose: () => void;
 }
 
-type FormDataType = Omit<Product, 'id' | 'category' | 'images' | 'rating'> & {
-  category_id: string;
+type FormDataType = {
+  name: string;
+  description: string;
+  price: number;
   images: (string | File)[];
-  gender: 'homme' | 'femme' | 'unisexe';
+  sizes: string[];
+  colors: string[];
+  stock_quantity: number;
+  created_at: string;
 };
 
 const initialState: FormDataType = {
   name: '',
   description: '',
   price: 0,
-  category_id: '',
   images: [],
   sizes: [''],
   colors: [''],
-  gender: 'unisexe',
   stock_quantity: 0,
-  is_featured: false,
   created_at: new Date().toISOString(), // Add created_at to satisfy the type
 };
 
@@ -39,13 +41,10 @@ const ProductForm: React.FC<ProductFormProps> = ({ product, onSubmit, onClose })
         name: product.name,
         description: product.description,
         price: product.price,
-        category_id: product.category?.id || product.category_id || '',
         images: existingImages,
         sizes: product.sizes || [''],
         colors: product.colors || [''],
-        gender: (product.category_id as 'homme' | 'femme' | 'unisexe') || 'unisexe',
         stock_quantity: product.stock_quantity || 0,
-        is_featured: !!product.is_featured,
         created_at: product.created_at || new Date().toISOString(),
       });
       setImagePreviews(existingImages);
@@ -125,8 +124,7 @@ const ProductForm: React.FC<ProductFormProps> = ({ product, onSubmit, onClose })
     data.append('description', formData.description.trim());
     const price = isNaN(Number(formData.price)) ? 0 : Number(formData.price);
     data.append('price', String(price));
-    // Backend expects category as 'homme' | 'femme' | 'unisexe'
-    data.append('category', formData.gender || 'unisexe');
+    // Category removed (optional)
     // colors as array of objects, convert from strings
     const colorsArr = (formData.colors || []).filter(Boolean).map((c) => ({ name: c, code: c }));
     data.append('colors', JSON.stringify(colorsArr));
@@ -136,7 +134,6 @@ const ProductForm: React.FC<ProductFormProps> = ({ product, onSubmit, onClose })
     data.append('sizes', JSON.stringify(sizesClean));
     const stock = Number.isFinite(Number(formData.stock_quantity)) ? parseInt(String(formData.stock_quantity), 10) : 0;
     data.append('stock', String(stock));
-    data.append('is_featured', String(!!formData.is_featured));
     data.append('is_new', 'true');
     // Append image files only (ignore existing URLs)
     (formData.images || []).forEach((img) => {
@@ -149,45 +146,30 @@ const ProductForm: React.FC<ProductFormProps> = ({ product, onSubmit, onClose })
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <div>
-          <label htmlFor="name" className="block text-sm font-medium text-gray-700">Nom du produit</label>
-          <input type="text" name="name" id="name" value={formData.name} onChange={handleChange} className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500" required />
+      {/* Infos principales */}
+      <div className="bg-white rounded-2xl shadow-sm ring-1 ring-gray-100 p-4 sm:p-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div>
+            <label htmlFor="name" className="block text-sm font-medium text-gray-700">Nom du produit</label>
+            <input type="text" name="name" id="name" value={formData.name} onChange={handleChange} className="mt-1 block w-full border border-gray-300 rounded-xl shadow-sm py-2.5 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500" required />
+          </div>
+          <div>
+            <label htmlFor="price" className="block text-sm font-medium text-gray-700">Prix</label>
+            <input type="number" name="price" id="price" value={formData.price} onChange={handleChange} className="mt-1 block w-full border border-gray-300 rounded-xl shadow-sm py-2.5 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500" required />
+          </div>
         </div>
-        <div>
-          <label htmlFor="price" className="block text-sm font-medium text-gray-700">Prix</label>
-          <input type="number" name="price" id="price" value={formData.price} onChange={handleChange} className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500" required />
-        </div>
-      </div>
-
-      <div>
-        <label htmlFor="description" className="block text-sm font-medium text-gray-700">Description</label>
-        <textarea name="description" id="description" value={formData.description} onChange={handleChange} rows={4} className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500" required />
-      </div>
-
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <div>
-          <label htmlFor="category_id" className="block text-sm font-medium text-gray-700">Catégorie</label>
-          <select name="category_id" id="category_id" value={formData.category_id} onChange={handleChange} className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500" required>
-            <option value="">Sélectionner une catégorie</option>
-            {mockCategories.map(cat => (
-              <option key={cat.id} value={cat.id}>{cat.name}</option>
-            ))}
-          </select>
-        </div>
-        <div>
-          <label htmlFor="gender" className="block text-sm font-medium text-gray-700">Genre</label>
-          <select name="gender" id="gender" value={formData.gender} onChange={handleChange} className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">
-            <option value="unisexe">Unisexe</option>
-            <option value="homme">Homme</option>
-            <option value="femme">Femme</option>
-          </select>
+        <div className="mt-4">
+          <label htmlFor="description" className="block text-sm font-medium text-gray-700">Description</label>
+          <textarea name="description" id="description" value={formData.description} onChange={handleChange} rows={4} className="mt-1 block w-full border border-gray-300 rounded-xl shadow-sm py-2.5 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500" required />
         </div>
       </div>
 
-      <div>
+      {/* Catégorie et Genre supprimés selon la demande */}
+
+      {/* Médias */}
+      <div className="bg-white rounded-2xl shadow-sm ring-1 ring-gray-100 p-4 sm:p-6">
         <label className="block text-sm font-medium text-gray-700 mb-1">Images</label>
-        <div className="mt-2 p-4 border-2 border-dashed border-gray-300 rounded-lg">
+        <div className="mt-2 p-4 border-2 border-dashed border-gray-300 rounded-xl">
           <input
             type="file"
             multiple
@@ -214,33 +196,65 @@ const ProductForm: React.FC<ProductFormProps> = ({ product, onSubmit, onClose })
         </div>
       </div>
 
-      {['sizes', 'colors'].map((field) => (
-        <div key={field}>
-          <label className="block text-sm font-medium text-gray-700 capitalize">{field}</label>
-          {formData[field as 'sizes' | 'colors'].map((item, index) => (
+      {/* Variantes */}
+      <div className="bg-white rounded-2xl shadow-sm ring-1 ring-gray-100 p-4 sm:p-6">
+        <h3 className="text-sm font-semibold text-gray-900 mb-3">Variantes</h3>
+        <label className="block text-sm font-medium text-gray-700">Tailles</label>
+        {formData.sizes.map((size, index) => (
+          <div key={index} className="flex items-center mt-1">
+            <select
+              value={size}
+              onChange={(e) => handleArrayChange(index, e.target.value, 'sizes')}
+              className="block w-full border border-gray-300 rounded-xl shadow-sm py-2.5 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+            >
+              <option value="">Sélectionner une taille</option>
+              {['XS','S','M','L','XL','XXL'].map(opt => (
+                <option key={opt} value={opt}>{opt}</option>
+              ))}
+            </select>
+            <button type="button" onClick={() => removeArrayItem(index, 'sizes')} className="ml-2 text-red-600 hover:text-red-800" aria-label="Supprimer">
+              <XIcon className="h-5 w-5" />
+            </button>
+          </div>
+        ))}
+        <button type="button" onClick={() => addArrayItem('sizes')} className="mt-2 text-sm text-indigo-600 hover:text-indigo-800">Ajouter taille</button>
+
+        <div className="mt-4">
+          <label className="block text-sm font-medium text-gray-700">Couleurs</label>
+          {formData.colors.map((color, index) => (
             <div key={index} className="flex items-center mt-1">
-              <input type="text" value={item} onChange={(e) => handleArrayChange(index, e.target.value, field as 'sizes' | 'colors')} className="block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500" />
-              <button type="button" onClick={() => removeArrayItem(index, field as 'sizes' | 'colors')} className="ml-2 text-red-600 hover:text-red-800">Supprimer</button>
+              <input
+                type="color"
+                value={/^#/.test(color) ? color : '#000000'}
+                onChange={(e) => handleArrayChange(index, e.target.value, 'colors')}
+                className="h-10 w-12 p-0 border border-gray-300 rounded-md bg-white"
+                title="Choisir une couleur"
+              />
+              <input
+                type="text"
+                value={color}
+                onChange={(e) => handleArrayChange(index, e.target.value, 'colors')}
+                className="ml-2 block w-full border border-gray-300 rounded-xl shadow-sm py-2.5 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+                placeholder="#000000 ou nom"
+              />
+              <button type="button" onClick={() => removeArrayItem(index, 'colors')} className="ml-2 text-red-600 hover:text-red-800" aria-label="Supprimer">
+                <XIcon className="h-5 w-5" />
+              </button>
             </div>
           ))}
-          <button type="button" onClick={() => addArrayItem(field as 'sizes' | 'colors')} className="mt-2 text-sm text-indigo-600 hover:text-indigo-800">Ajouter {field}</button>
-        </div>
-      ))}
-
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <div>
-          <label htmlFor="stock_quantity" className="block text-sm font-medium text-gray-700">Quantité en stock</label>
-          <input type="number" name="stock_quantity" id="stock_quantity" value={formData.stock_quantity} onChange={handleChange} className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500" />
-        </div>
-        <div className="flex items-center">
-          <input type="checkbox" name="is_featured" id="is_featured" checked={formData.is_featured} onChange={handleChange} className="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded" />
-          <label htmlFor="is_featured" className="ml-2 block text-sm text-gray-900">Produit vedette</label>
+          <button type="button" onClick={() => addArrayItem('colors')} className="mt-2 text-sm text-indigo-600 hover:text-indigo-800">Ajouter couleur</button>
         </div>
       </div>
 
-      <div className="flex justify-end space-x-4">
-        <button type="button" onClick={onClose} className="bg-gray-200 text-gray-800 px-4 py-2 rounded-md hover:bg-gray-300">Annuler</button>
-        <button type="submit" className="bg-indigo-600 text-white px-4 py-2 rounded-md hover:bg-indigo-700">{product ? 'Mettre à jour' : 'Créer'}</button>
+      {/* Stock */}
+      <div className="bg-white rounded-2xl shadow-sm ring-1 ring-gray-100 p-4 sm:p-6">
+        <label htmlFor="stock_quantity" className="block text-sm font-medium text-gray-700">Quantité en stock</label>
+        <input type="number" name="stock_quantity" id="stock_quantity" value={formData.stock_quantity} onChange={handleChange} className="mt-1 block w-full border border-gray-300 rounded-xl shadow-sm py-2.5 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500" />
+      </div>
+
+      <div className="flex justify-end space-x-3">
+        <button type="button" onClick={onClose} className="bg-gray-100 text-gray-800 px-4 py-2 rounded-xl hover:bg-gray-200 ring-1 ring-gray-200">Annuler</button>
+        <button type="submit" className="bg-indigo-600 text-white px-4 py-2 rounded-xl hover:bg-indigo-700 shadow-sm">{product ? 'Mettre à jour' : 'Créer'}</button>
       </div>
     </form>
   );

@@ -91,6 +91,11 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, onAddToCart }) => {
   };
 
   const getColorStyle = (color: string) => {
+    const isHex = /^#([0-9A-Fa-f]{3}|[0-9A-Fa-f]{6})$/i.test(color);
+    if (isHex) return color;
+    const isRgb = /^rgba?\(/i.test(color);
+    if (isRgb) return color;
+
     const colorMap: { [key: string]: string } = {
       'Noir': '#000000',
       'Blanc': '#FFFFFF',
@@ -110,7 +115,10 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, onAddToCart }) => {
       'Marron': '#A52A2A',
       'Bordeaux': '#800020'
     };
-    return colorMap[color] || '#CCCCCC';
+    if (colorMap[color]) return colorMap[color];
+    const cap = color.charAt(0).toUpperCase() + color.slice(1).toLowerCase();
+    if (colorMap[cap]) return colorMap[cap];
+    return color || '#CCCCCC';
   };
 
   const rating: number = product.rating;

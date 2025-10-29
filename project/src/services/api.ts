@@ -88,6 +88,10 @@ export const products = {
     const res = await api.get('/products', { params });
     return res.data;
   },
+  getById: async (id: string) => {
+    const res = await api.get(`/products/${id}`);
+    return res.data;
+  },
   getBest: async (limit?: number) => {
     const res = await api.get('/products/best', { params: { limit } });
     return res.data;

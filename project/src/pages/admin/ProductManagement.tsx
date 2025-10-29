@@ -59,7 +59,35 @@ const ProductManagement: React.FC = () => {
     createdAt: string;
   };
 
-  
+   const getColorStyle = (color: string) => {
+    const isHex = /^#([0-9A-Fa-f]{3}|[0-9A-Fa-f]{6})$/i.test(color);
+    if (isHex) return color;
+    const isRgb = /^rgba?\(/i.test(color);
+    if (isRgb) return color;
+    const colorMap: { [key: string]: string } = {
+      Noir: '#000000',
+      Blanc: '#FFFFFF',
+      Gris: '#808080',
+      Marine: '#000080',
+      Rouge: '#FF0000',
+      Bleu: '#0000FF',
+      Rose: '#FFC0CB',
+      Lavande: '#E6E6FA',
+      Jaune: '#FFFF00',
+      Menthe: '#98FB98',
+      Beige: '#F5F5DC',
+      Vert: '#008000',
+      Orange: '#FFA500',
+      Violet: '#8A2BE2',
+      Kaki: '#F0E68C',
+      Marron: '#A52A2A',
+      Bordeaux: '#800020',
+    };
+    if (colorMap[color]) return colorMap[color];
+    const cap = color.charAt(0).toUpperCase() + color.slice(1).toLowerCase();
+    if (colorMap[cap]) return colorMap[cap];
+    return color || '#CCCCCC';
+  };
 
   const handleDelete = (productId: string) => {
     if (window.confirm('Êtes-vous sûr de vouloir supprimer ce produit ?')) {
@@ -108,6 +136,7 @@ const ProductManagement: React.FC = () => {
           Ajouter un produit
         </button>
       </div>
+      {/* utilitaires simples */}
 
       {/* Desktop Table View */}
       <div className="hidden md:block bg-white shadow-md rounded-lg overflow-x-auto">
@@ -118,7 +147,8 @@ const ProductManagement: React.FC = () => {
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Nom</th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Prix</th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Stock</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Catégorie</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tailles</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Couleurs</th>
               <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
             </tr>
           </thead>
@@ -139,7 +169,27 @@ const ProductManagement: React.FC = () => {
                     {product.stock_quantity}
                   </span>
                 </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">{product.category?.name || 'Non assigné'}</td>
+                <td className="px-6 py-4 whitespace-nowrap">
+                  <div className="flex flex-wrap gap-1">
+                    {(product.sizes || []).map((s) => (
+                      <span key={s} className="px-2 py-0.5 text-xs rounded-full bg-gray-100 text-gray-800 border border-gray-200">
+                        {s}
+                      </span>
+                    ))}
+                  </div>
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap">
+                  <div className="flex flex-wrap gap-2 items-center">
+                    {(product.colors || []).map((c, idx) => (
+                      <span
+                        key={`${c}-${idx}`}
+                        title={c}
+                        className="inline-block h-4 w-4 rounded-full border border-gray-300"
+                        style={{ backgroundColor: getColorStyle(c) }}
+                      />
+                    ))}
+                  </div>
+                </td>
                 <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                   <button onClick={() => handleOpenModal(product)} className="text-indigo-600 hover:text-indigo-900 mr-4">
                     <Edit className="h-5 w-5" />
@@ -162,9 +212,25 @@ const ProductManagement: React.FC = () => {
               <img src={product.images[0]} alt={product.name} className="h-20 w-20 rounded-md object-cover flex-shrink-0" />
               <div className="flex-grow">
                 <h3 className="font-bold text-gray-800 text-lg">{product.name}</h3>
-                <p className="text-gray-600 text-sm">{product.category?.name || 'Non assigné'}</p>
                 <p className="text-blue-600 font-semibold text-md mt-1">{product.price.toFixed(3)} TND</p>
               </div>
+            </div>
+            <div className="flex flex-wrap items-center gap-2">
+              {(product.sizes || []).map((s) => (
+                <span key={s} className="px-2 py-0.5 text-xs rounded-full bg-gray-100 text-gray-800 border border-gray-200">
+                  {s}
+                </span>
+              ))}
+            </div>
+            <div className="flex flex-wrap items-center gap-2">
+              {(product.colors || []).map((c, idx) => (
+                <span
+                  key={`${c}-${idx}`}
+                  title={c}
+                  className="inline-block h-4 w-4 rounded-full border border-gray-300"
+                  style={{ backgroundColor: getColorStyle(c) }}
+                />
+              ))}
             </div>
             <div className="flex justify-between items-center pt-2 border-t border-gray-200">
               <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${product.stock_quantity > 10 ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>

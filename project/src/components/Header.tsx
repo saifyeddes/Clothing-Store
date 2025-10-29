@@ -1,83 +1,47 @@
 import React, { useState } from 'react';
-import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { ShoppingCart, Search, X, Heart } from 'lucide-react';
+import { Link } from 'react-router-dom';
+import { ShoppingCart, Heart } from 'lucide-react';
 import { useCart } from '../contexts/CartContext';
 import { useFavorites } from '../contexts/FavoritesContext';
 
 const Header: React.FC = () => {
   const { totalItems } = useCart();
   const { favorites } = useFavorites();
-  const location = useLocation();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [isRotating, setIsRotating] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
-  const [searchQuery, setSearchQuery] = useState('');
-  const searchTimeoutRef = React.useRef<NodeJS.Timeout>();
-  const navigate = useNavigate();
 
-  // Vérifier si on est sur une page qui doit afficher la barre de recherche
-  const shouldShowSearch = ['/', '/category'].some(path => 
-    location.pathname.startsWith(path)
-  );
-
-  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const query = e.target.value.toLowerCase();
-    setSearchQuery(query);
-    
-    // Annuler le délai précédent
-    if (searchTimeoutRef.current) {
-      clearTimeout(searchTimeoutRef.current);
-    }
-    
-    // Délai avant d'exécuter la recherche
-    searchTimeoutRef.current = setTimeout(() => {
-      if (query.trim()) {
-        // Créer un paramètre de recherche pour le nom, la description et les couleurs
-        navigate(`/category/all?search=${encodeURIComponent(query)}`);
-      } else if (window.location.search) {
-        navigate('/category/all');
-      }
-    }, 300);
-  };
-
-  const clearSearch = () => {
-    setSearchQuery('');
-    if (window.location.pathname.startsWith('/category')) {
-      navigate('/category/all');
-    }
-  };
-
+  // Gestion du défilement pour la couleur de la navbar
   React.useEffect(() => {
     const handleScroll = () => {
       setIsScrolled(window.scrollY > 10);
     };
+    
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
+  // Animation de rotation automatique du logo toutes les 5 secondes
+  React.useEffect(() => {
+    const rotateLogo = () => {
+      setIsRotating(true);
+      setTimeout(() => setIsRotating(false), 1000); // Durée de l'animation
+    };
 
+    // Démarrer l'animation immédiatement, puis toutes les 5 secondes
+    rotateLogo();
+    const intervalId = setInterval(rotateLogo, 5000);
 
-  /*
-  const handleSignOut = async () => {
-    try {
-      await signOut();
-      navigate('/');
-    } catch (error) {
-      console.error('Error signing out:', error);
-    }
-  };
-  */
+    return () => clearInterval(intervalId);
+  }, []);
 
   return (
-    <header
-      className={`sticky top-0 z-50 transition-all duration-300 ${
-        isScrolled ? 'bg-white shadow-md' : 'bg-transparent'
-      }`}
-    >
+    <header className={`sticky top-0 z-50 transition-all duration-300 ${isScrolled ? 'bg-white shadow-md' : 'bg-transparent'}`}>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
           {/* Logo */}
           <Link to="/" className="flex items-center space-x-2">
-            <div className="text-2xl font-bold text-black">
+            <div className={`text-2xl font-bold text-black ${isRotating ? 'animate-spin' : ''} transition-transform duration-1000`}>
               Room<span className="text-yellow-600">.tn</span>
             </div>
           </Link>
@@ -110,44 +74,15 @@ const Header: React.FC = () => {
             </Link>
           </nav> */}
 
-          {/* Barre de recherche (uniquement sur Home et Category) */}
-          {shouldShowSearch && (
-            <div className="hidden md:flex items-center flex-1 max-w-2xl mx-4">
-              <div className="relative w-full">
-                <input
-                  type="text"
-                  value={searchQuery}
-                  onChange={handleSearchChange}
-                  onFocus={(e) => e.target.select()}
-                  onKeyDown={(e) => e.key === 'Escape' && e.currentTarget.blur()}
-                  placeholder="Rechercher des produits..."
-                  className="w-full pl-5 pr-10 py-2.5 rounded-full border-2 border-gray-200 focus:ring-2 focus:ring-yellow-400 focus:border-yellow-400 focus:border-opacity-50 focus:outline-none transition-all duration-200 text-gray-800 placeholder-gray-400 bg-white shadow-sm hover:shadow-md"
-                  aria-label="Rechercher des produits"
-                />
-                {searchQuery ? (
-                  <button
-                    onClick={clearSearch}
-                    className="absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors p-1"
-                    aria-label="Effacer la recherche"
-                  >
-                    <X className="h-5 w-5" />
-                  </button>
-                ) : (
-                  <div className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400">
-                    <Search className="h-5 w-5" />
-                  </div>
-                )}
-              </div>
-            </div>
-          )}
-          {!shouldShowSearch && <div className="flex-1"></div>}
+          {/* Espace vide pour aligner les éléments */}
+          <div className="flex-1"></div>
 
           {/* Right side icons */}
           <div className="flex items-center space-x-4">
             {/* Favorites */}
             <Link
               to="/favorites"
-              className="relative p-2 text-black hover:text-red-500 transition-colors"
+              className="relative p-2 text-gray-400 hover:text-red-400 transition-colors"
               aria-label="Mes favoris"
             >
               <Heart className="h-6 w-6" />
@@ -161,7 +96,7 @@ const Header: React.FC = () => {
             {/* Cart */}
             <Link
               to="/cart"
-              className="relative p-2 text-black hover:text-yellow-600 transition-colors"
+              className="relative p-2 text-gray-400 hover:text-yellow-500 transition-colors"
               aria-label="Panier"
             >
               <ShoppingCart className="h-6 w-6" />

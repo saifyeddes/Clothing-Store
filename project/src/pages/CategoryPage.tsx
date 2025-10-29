@@ -15,7 +15,6 @@ const CategoryPage: React.FC = () => {
   
   const { addToCart } = useCart();
   
-  const [sortBy] = useState('name');
   const [priceRange, setPriceRange] = useState([0, 200]);
   const [selectedColors, setSelectedColors] = useState<string[]>([]);
   const [selectedSizes, setSelectedSizes] = useState<string[]>([]);
@@ -59,6 +58,9 @@ const CategoryPage: React.FC = () => {
   }, [searchQuery]);
 
   const [fetchedProducts, setFetchedProducts] = useState<Product[]>([]);
+  const [visibleProducts, setVisibleProducts] = useState(6);
+  const productsPerPage = 6;
+  const [sortOption, setSortOption] = useState<string>('name-asc'); // Par défaut : tri par nom croissant
 
   type BackendImage = { url: string; alt?: string };
   type BackendColor = { name?: string; code?: string } | string;
@@ -114,54 +116,58 @@ const CategoryPage: React.FC = () => {
     load();
   }, [gender]);
 
-  // Filter products by gender and search query (client-side on fetched list)
+  // Filtrer les produits
   const filteredProducts = useMemo(() => {
     return fetchedProducts.filter((product: Product) => {
-      // Apply gender filter when route param is enfant -> unisexe
+      // Filtre par genre
       if (gender === 'homme' && product.category_id !== 'homme') return false;
       if (gender === 'femme' && product.category_id !== 'femme') return false;
       if (gender === 'enfant' && product.category_id !== 'unisexe') return false;
       
-      // Apply search query filter if present
+      // Filtre par recherche
       if (searchQuery) {
         const searchInName = product.name.toLowerCase().includes(searchQuery);
         const searchInDescription = product.description.toLowerCase().includes(searchQuery);
         const searchInColors = product.colors.some(color => 
           color.toLowerCase().includes(searchQuery)
         );
-        return searchInName || searchInDescription || searchInColors;
+        if (!(searchInName || searchInDescription || searchInColors)) return false;
+      }
+      
+      // Filtre par prix
+      if (product.price < priceRange[0] || product.price > priceRange[1]) return false;
+      
+      // Filtre par couleur
+      if (selectedColors.length > 0 && !product.colors.some(color => selectedColors.includes(color))) {
+        return false;
+      }
+      
+      // Filtre par taille
+      if (selectedSizes.length > 0 && !product.sizes.some(size => selectedSizes.includes(size))) {
+        return false;
       }
       
       return true;
     });
-  }, [gender, searchQuery, fetchedProducts]);
+  }, [fetchedProducts, gender, searchQuery, priceRange, selectedColors, selectedSizes]);
 
-  // Apply additional filters
-  const finalProducts = useMemo(() => {
-    return filteredProducts.filter(product => {
-      const priceInRange = product.price >= priceRange[0] && product.price <= priceRange[1];
-      const colorMatch = selectedColors.length === 0 || product.colors.some(color => selectedColors.includes(color));
-      const sizeMatch = selectedSizes.length === 0 || product.sizes.some(size => selectedSizes.includes(size));
-      
-      return priceInRange && colorMatch && sizeMatch;
-    });
-  }, [filteredProducts, priceRange, selectedColors, selectedSizes]);
-
-  // Sort products
+  // Trier les produits
   const sortedProducts = useMemo(() => {
-    return [...finalProducts].sort((a, b) => {
-    switch (sortBy) {
-      case 'price-low':
-        return a.price - b.price;
-      case 'price-high':
-        return b.price - a.price;
-      case 'name':
-        return a.name.localeCompare(b.name);
+    return [...filteredProducts].sort((a, b) => {
+      switch(sortOption) {
+        case 'name-asc':
+          return a.name.localeCompare(b.name);
+        case 'name-desc':
+          return b.name.localeCompare(a.name);
+        case 'price-asc':
+          return a.price - b.price;
+        case 'price-desc':
+          return b.price - a.price;
         default:
           return 0;
       }
     });
-  }, [finalProducts, sortBy]);
+  }, [filteredProducts, sortOption]);
 
   const handleQuickAddToCart = (product: Product) => {
     const defaultSize = product.sizes?.[0] || '';
@@ -251,12 +257,7 @@ const CategoryPage: React.FC = () => {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header */}
         <div className="mb-8 pt-8">
-          <div>
-            <h1 className="text-3xl font-bold text-gray-900 mb-1">{getCategoryTitle()}</h1>
-            <p className="text-gray-600">
-              {sortedProducts.length} produit{sortedProducts.length > 1 ? 's' : ''} trouvé{sortedProducts.length > 1 ? 's' : ''}
-            </p>
-          </div>
+          {/* Titre déplacé dans le bloc ci-dessus */}
         </div>
         
         {/* Affichage des résultats de recherche */}
@@ -264,7 +265,7 @@ const CategoryPage: React.FC = () => {
           <div className="mb-6 max-w-3xl mx-auto px-4">
             <div className="flex items-center justify-between bg-gray-50 rounded-lg p-3">
               <div className="text-sm text-gray-700">
-                <span className="font-medium">{finalProducts.length}</span> résultat{finalProducts.length !== 1 ? 's' : ''} pour "<span className="text-yellow-600 font-medium">{searchQuery}</span>"
+                <span className="font-medium">{sortedProducts.length}</span> résultat{sortedProducts.length !== 1 ? 's' : ''} pour "<span className="text-yellow-600 font-medium">{searchQuery}</span>"
               </div>
               <button 
                 onClick={() => navigate('/category/all')}
@@ -278,18 +279,69 @@ const CategoryPage: React.FC = () => {
         )}
 
         <div className="w-full">
+          {/* En-tête avec compteur et tri */}
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8 gap-4">
+          <div>
+            <h1 className="text-2xl font-bold text-gray-900">{getCategoryTitle()}</h1>
+            <p className="text-gray-600 mt-1">
+              {sortedProducts.length} produit{sortedProducts.length > 1 ? 's' : ''} disponible{sortedProducts.length > 1 ? 's' : ''}
+            </p>
+          </div>
+          
+          <div className="w-full sm:w-64">
+            <div className="relative">
+              <select
+                id="sort"
+                value={sortOption}
+                onChange={(e) => setSortOption(e.target.value)}
+                className="block w-full pl-4 pr-10 py-2.5 text-sm text-gray-700 bg-white border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500"
+              >
+                <option value="name-asc">Trier par : Nom (A-Z)</option>
+                <option value="name-desc">Trier par : Nom (Z-A)</option>
+                <option value="price-asc">Trier par : Prix croissant</option>
+                <option value="price-desc">Trier par : Prix décroissant</option>
+              </select>
+              <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
+                <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                </svg>
+              </div>
+            </div>
+          </div>
+        </div>
+
           {/* Products Grid */}
           <div className="w-full">
             {sortedProducts.length > 0 ? (
-              <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
-                {sortedProducts.map((product) => (
-                  <ProductCard 
-                    key={product.id} 
-                    product={product} 
-                    onAddToCart={handleQuickAddToCart}
-                  />
-                ))}
-              </div>
+              <>
+                <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
+                  {sortedProducts.slice(0, visibleProducts).map((product) => (
+                    <ProductCard 
+                      key={product.id} 
+                      product={product} 
+                      onAddToCart={handleQuickAddToCart}
+                    />
+                  ))}
+                </div>
+                <div className="mt-8 text-center space-y-4">
+                  {visibleProducts < sortedProducts.length && (
+                    <button
+                      onClick={() => setVisibleProducts(prev => prev + productsPerPage)}
+                      className="px-6 py-2 border border-yellow-600 text-yellow-600 rounded-md hover:bg-yellow-50 transition-colors mr-4"
+                    >
+                      Voir plus de produits
+                    </button>
+                  )}
+                  {visibleProducts > 6 && (
+                    <button
+                      onClick={() => setVisibleProducts(6)}
+                      className="px-6 py-2 border border-gray-300 text-gray-600 rounded-md hover:bg-gray-50 transition-colors"
+                    >
+                      Voir moins
+                    </button>
+                  )}
+                </div>
+              </>
             ) : (
               <>
                 {gender === 'femme' ? (

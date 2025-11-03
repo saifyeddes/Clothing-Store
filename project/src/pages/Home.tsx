@@ -1,12 +1,11 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { ArrowRight } from 'lucide-react';
+import { ArrowRight, ArrowUp } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 import ProductCard from '../components/ProductCard';
 import { useCart } from '../contexts/CartContext';
 import type { Product } from '../types';
 import { products as productsApi, ASSETS_BASE } from '../services/api';
- 
-
 
 // 10 high-quality fashion images for the carousel
 const heroImages = [
@@ -23,6 +22,7 @@ const Home: React.FC = () => {
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [isPaused, setIsPaused] = useState(false);
   const [featuredProducts, setFeaturedProducts] = useState<Product[]>([]);
+  const [showScrollButton, setShowScrollButton] = useState(false);
 
   type BackendImage = { url: string; alt?: string };
   type BackendColor = { name?: string; code?: string } | string;
@@ -68,6 +68,20 @@ const Home: React.FC = () => {
     load();
   }, [mapFromBackend]);
 
+  // Gestion du défilement pour afficher le bouton
+  useEffect(() => {
+    const handleScroll = () => {
+      if (window.scrollY > 300) {
+        setShowScrollButton(true);
+      } else {
+        setShowScrollButton(false);
+      }
+    };
+
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
   // Auto-advance carousel
   useEffect(() => {
     if (isPaused) return;
@@ -80,6 +94,22 @@ const Home: React.FC = () => {
     
     return () => clearInterval(timer);
   }, [isPaused]);
+
+  // Fonction pour remonter en haut de la page
+  const scrollToTop = () => {
+    window.scrollTo({
+      top: 0,
+      behavior: 'smooth',
+    });
+  };
+
+  // Fonction pour faire défiler jusqu'à la section des produits
+  const scrollToProducts = () => {
+    const productsSection = document.getElementById('featured-products');
+    if (productsSection) {
+      productsSection.scrollIntoView({ behavior: 'smooth' });
+    }
+  };
 
   // search handled in Header; removing unused local handler
 
@@ -95,7 +125,25 @@ const Home: React.FC = () => {
 
 
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen relative">
+      {/* Bouton de retour en haut */}
+      <motion.button
+        onClick={scrollToTop}
+        className={`fixed right-8 bottom-8 z-50 p-3 rounded-full bg-yellow-500 text-white shadow-lg transition-all duration-300 ${
+          showScrollButton ? 'opacity-100' : 'opacity-0 pointer-events-none'
+        }`}
+        whileHover={{ scale: 1.1, backgroundColor: '#F59E0B' }}
+        whileTap={{ scale: 0.95 }}
+        initial={{ y: 20, opacity: 0 }}
+        animate={{
+          y: showScrollButton ? 0 : 20,
+          opacity: showScrollButton ? 1 : 0,
+        }}
+        transition={{ type: 'spring', stiffness: 300, damping: 20 }}
+        aria-label="Remonter en haut de la page"
+      >
+        <ArrowUp className="w-6 h-6" />
+      </motion.button>
       
       {/* Hero Section with Carousel */}
       <section 
@@ -155,127 +203,85 @@ const Home: React.FC = () => {
 
           {/* Slogan principal */}
           <div className="mb-8">
-            <p className="text-2xl md:text-4xl font-bold mb-4 text-gray-100 drop-shadow-lg">
-              Votre Boutique T-Shirts Unisexes
-            </p>
-            <p className="text-lg md:text-xl text-gray-300 max-w-3xl mx-auto leading-relaxed">
-              Découvrez notre collection exclusive de t-shirts unisexes de qualité
-              supérieure, conçus pour s'adapter à tous les styles
-            </p>
+            <motion.p 
+              className="text-2xl md:text-4xl font-bold mb-4 text-gray-100 drop-shadow-lg"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.8, delay: 0.2 }}
+            >
+              L'Élégance à Votre Image
+            </motion.p>
+            <motion.p 
+              className="text-lg md:text-xl text-gray-300 max-w-3xl mx-auto leading-relaxed"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.8, delay: 0.4 }}
+            >
+              Explorez notre collection raffinée de t-shirts unisexes, où le confort rencontre le style intemporel. 
+              Des matières d'exception pour une élégance au quotidien.
+            </motion.p>
           </div>
 
-          {/* Statistiques */}
-          <div className="grid grid-cols-3 gap-8 mb-10 max-w-2xl mx-auto">
-            <div className="text-center">
-              <div className="text-3xl md:text-4xl font-bold text-yellow-400 mb-1">
-                200+
-              </div>
-              <div className="text-sm text-gray-300">Modèles</div>
-            </div>
-            <div className="text-center">
-              <div className="text-3xl md:text-4xl font-bold text-yellow-400 mb-1">
-                5K+
-              </div>
-              <div className="text-sm text-gray-300">Clients</div>
-            </div>
-            <div className="text-center">
-              <div className="text-3xl md:text-4xl font-bold text-yellow-400 mb-1">
-                24H
-              </div>
-              <div className="text-sm text-gray-300">Livraison</div>
-            </div>
-          </div>
+          {/* Statistiques avec animation */}
+          <motion.div 
+            className="grid grid-cols-3 gap-8 mb-10 max-w-2xl mx-auto"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8, delay: 0.6 }}
+          >
+            {[
+              { value: '200+', label: 'Modèles' },
+              { value: '5K+', label: 'Clients Satisfaits' },
+              { value: '24H', label: 'Livraison Express' }
+            ].map((stat, index) => (
+              <motion.div 
+                key={index}
+                className="text-center"
+                whileHover={{ scale: 1.05 }}
+                transition={{ type: 'spring', stiffness: 300 }}
+              >
+                <AnimatePresence mode="wait">
+                  <motion.div
+                    key={`${stat.value}-${currentImageIndex}`}
+                    className="text-3xl md:text-4xl font-bold text-yellow-400 mb-1"
+                    initial={{ opacity: 0, y: -20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: 20 }}
+                    transition={{ duration: 0.5 }}
+                  >
+                    {stat.value}
+                  </motion.div>
+                </AnimatePresence>
+                <div className="text-sm text-gray-300">{stat.label}</div>
+              </motion.div>
+            ))}
+          </motion.div>
 
           {/* Call to Action */}
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-            <Link
-              to="/category/all"
-              className="bg-yellow-500 text-gray-900 font-bold py-3 px-8 rounded-lg text-lg hover:bg-yellow-400 transition-all duration-300 shadow-lg transform hover:scale-105"
+          <motion.div 
+            className="flex flex-col sm:flex-row items-center justify-center gap-4"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8, delay: 0.8 }}
+          >
+            <button
+              onClick={scrollToProducts}
+              className="group relative overflow-hidden bg-yellow-500 text-gray-900 font-bold py-3 px-8 rounded-lg text-lg transition-all duration-500 shadow-lg transform hover:scale-105"
             >
-              Découvrir les T-Shirts
-            </Link>
-          </div>
+              <span className="relative z-10">Découvrir la Collection</span>
+              <motion.span 
+                className="absolute inset-0 bg-gradient-to-r from-yellow-400 to-yellow-600 opacity-0 group-hover:opacity-100 transition-opacity duration-500"
+                initial={{ x: '-100%' }}
+                whileHover={{ x: '0%' }}
+              />
+            </button>
+          </motion.div>
+          
         </div>
       </section>
 
-      {/* Why Choose Us Section */}
-      {/* <section className="py-16 bg-gray-50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-12">
-            <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
-              Pourquoi Choisir Room.tn ?
-            </h2>
-            <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-              Qualité, style et service client exceptionnel, au cœur de la
-              Tunisie.
-            </p>
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 text-center">
-            <div className="p-6 bg-white rounded-lg shadow-md">
-              <div className="flex items-center justify-center h-16 w-16 rounded-full bg-yellow-500 text-white mx-auto mb-4">
-                <TrendingUp className="h-8 w-8" />
-              </div>
-              <h3 className="text-xl font-bold text-gray-900 mb-2">
-                Qualité Premium
-              </h3>
-              <p className="text-gray-600">
-                T-shirts 100% coton, conçus pour durer et offrir un confort
-                maximal.
-              </p>
-            </div>
-            <div className="p-6 bg-white rounded-lg shadow-md">
-              <div className="flex items-center justify-center h-16 w-16 rounded-full bg-yellow-500 text-white mx-auto mb-4">
-                <Users className="h-8 w-8" />
-              </div>
-              <h3 className="text-xl font-bold text-gray-900 mb-2">
-                Designs Exclusifs
-              </h3>
-              <p className="text-gray-600">
-                Des designs uniques et tendances que vous ne trouverez nulle part
-                ailleurs.
-              </p>
-            </div>
-            <div className="p-6 bg-white rounded-lg shadow-md">
-              <div className="flex items-center justify-center h-16 w-16 rounded-full bg-yellow-500 text-white mx-auto mb-4">
-                <ShoppingBag className="h-8 w-8" />
-              </div>
-              <h3 className="text-xl font-bold text-gray-900 mb-2">
-                Achat Facile & Rapide
-              </h3>
-              <p className="text-gray-600">
-                Expérience d'achat simple, livraison rapide et service client à
-                votre écoute.
-              </p>
-            </div>
-          </div>
-        </div>
-      </section> */}
-
-      {/* Categories Section */}
-      {/* <section className="py-16 bg-white">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <h2 className="text-3xl font-bold text-center text-gray-900 mb-10">Nos Catégories</h2>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
-            {mockCategories.map((category) => (
-              <Link to={`/category/${category.name.toLowerCase().replace(' ', '-')}`} key={category.id} className="group block">
-                <div className="relative overflow-hidden rounded-lg">
-                  <img 
-                    src={category.image_url} 
-                    alt={category.name} 
-                    className="w-full h-64 object-cover group-hover:scale-110 transition-transform duration-300"
-                  />
-                  <div className="absolute inset-0 bg-black bg-opacity-40 flex items-center justify-center">
-                    <h3 className="text-2xl font-semibold text-white tracking-wider">{category.name}</h3>
-                  </div>
-                </div>
-              </Link>
-            ))}
-          </div>
-        </div>
-      </section> */}
-
       {/* Featured Products Section */}
-      <section className="py-16 bg-white">
+      <section id="featured-products" className="py-16 bg-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-12">
             <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
@@ -308,31 +314,6 @@ const Home: React.FC = () => {
         </div>
       </section>
 
-      {/* Newsletter Section */}
-      {/* <section className="py-16 bg-gray-900 text-white">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <h2 className="text-3xl md:text-4xl font-bold mb-4">
-            Restez informé des nouveautés
-          </h2>
-          <p className="text-xl text-gray-300 mb-8 max-w-2xl mx-auto">
-            Inscrivez-vous à notre newsletter pour recevoir les nouveaux t-shirts
-            et offres exclusives
-          </p>
-          <form className="max-w-md mx-auto flex gap-4">
-            <input
-              type="email"
-              placeholder="Votre adresse email"
-              className="flex-1 px-4 py-3 rounded-lg text-gray-900 focus:ring-2 focus:ring-yellow-500 focus:outline-none"
-            />
-            <button
-              type="submit"
-              className="bg-yellow-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-yellow-700 transition-colors"
-            >
-              S'inscrire
-            </button>
-          </form>
-        </div>
-      </section> */}
     </div>
   );
 };

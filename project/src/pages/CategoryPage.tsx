@@ -9,7 +9,7 @@ import { products as productsApi, ASSETS_BASE } from '../services/api';
 
 const CategoryPage: React.FC = () => {
   const navigate = useNavigate();
-  const { gender } = useParams<{ gender: string }>();
+  const { gender } = useParams<{ gender: 'collections' | 'nouveautes' | 'meilleures-ventes' }>();
   const [searchParams] = useSearchParams();
   const searchQuery = searchParams.get('search')?.toLowerCase() || '';
   
@@ -83,8 +83,14 @@ const CategoryPage: React.FC = () => {
       try {
         // Optionally can pass query params, but backend filtering by category happens with ?category=...
         const params: Record<string, string> = {};
-        if (gender === 'homme' || gender === 'femme' || gender === 'unisexe') {
-          params.category = gender;
+        if (gender) {
+          // Mapper les nouvelles catégories aux anciennes pour la rétrocompatibilité
+          const categoryMap: Record<string, string> = {
+            'collections': 'unisexe',
+            'nouveautes': 'new',
+            'meilleures-ventes': 'best-seller'
+          };
+          params.category = categoryMap[gender] || gender;
         }
         const data: BackendProduct[] = await productsApi.getAll(params);
         const mapped: Product[] = (data || []).map((p) => ({
@@ -119,10 +125,10 @@ const CategoryPage: React.FC = () => {
   // Filtrer les produits
   const filteredProducts = useMemo(() => {
     return fetchedProducts.filter((product: Product) => {
-      // Filtre par genre
-      if (gender === 'homme' && product.category_id !== 'homme') return false;
-      if (gender === 'femme' && product.category_id !== 'femme') return false;
-      if (gender === 'enfant' && product.category_id !== 'unisexe') return false;
+      // Filtre par catégorie
+      if (gender === 'collections' && product.category_id !== 'unisexe') return false;
+      if (gender === 'nouveautes' && !product.category_id.includes('new')) return false;
+      if (gender === 'meilleures-ventes' && !product.is_featured) return false;
       
       // Filtre par recherche
       if (searchQuery) {
@@ -179,16 +185,12 @@ const CategoryPage: React.FC = () => {
     if (searchQuery) {
       return `Résultats pour "${searchQuery}"`;
     }
-    switch (gender) {
-      case 'homme':
-        return 'T-Shirts Homme';
-      case 'femme':
-        return 'T-Shirts Femme';
-      case 'enfant':
-        return 'T-Shirts Enfant';
-      default:
-        return 'Tous les T-Shirts';
-    }
+    const categoryName = 
+      gender === 'collections' ? 'Collections' :
+      gender === 'nouveautes' ? 'Nouveautés' :
+      gender === 'meilleures-ventes' ? 'Meilleures Ventes' :
+      'Tous les produits';
+    return categoryName;
   };
 
   // Map color names to their corresponding hex codes
@@ -366,28 +368,18 @@ const CategoryPage: React.FC = () => {
                 </div>
               </>
             ) : (
-              <>
-                {gender === 'femme' ? (
-                  <div className="text-center py-12">
-                    <h3 className="text-lg font-medium text-gray-900 mb-2">
-                      Pas de produits pour le moment
-                    </h3>
-                    <p className="text-gray-600">
-                      Nous avons travaillé pour produire des nouveaux produits pour femme.
-                    </p>
-                  </div>
-                ) : (
-                  <div className="text-center py-12">
-                    <FilterIcon className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                    <h3 className="text-lg font-medium text-gray-900 mb-2">
-                      Aucun produit trouvé
-                    </h3>
-                    <p className="text-gray-600">
-                      Essayez de modifier vos filtres pour voir plus de produits.
-                    </p>
-                  </div>
-                )}
-              </>
+              <div className="text-center py-12">
+                <h3 className="text-lg font-medium text-gray-900 mb-2">
+                  {gender === 'nouveautes' ? 'Aucune nouveauté pour le moment' : 
+                   gender === 'meilleures-ventes' ? 'Aucun best-seller pour le moment' :
+                   'Aucun produit trouvé'}
+                </h3>
+                <p className="text-gray-600">
+                  {gender === 'nouveautes' ? 'Revenez bientôt pour découvrir nos prochaines nouveautés !' :
+                   gender === 'meilleures-ventes' ? 'Les meilleures ventes seront bientôt disponibles ici.' :
+                   'Essayez de modifier vos critères de recherche ou de filtrage.'}
+                </p>
+              </div>
             )}
           </div>
         </div>

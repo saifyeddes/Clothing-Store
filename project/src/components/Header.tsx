@@ -136,33 +136,21 @@ const Header: React.FC = () => {
             </motion.div>
           </Link>
 
-          {/* Desktop Navigation */}
-          {/* <nav className="hidden md:flex items-center space-x-8">
-            <Link
-              to="/category/homme"
-              className="transition-colors font-medium text-black hover:text-yellow-600"
-            >
-              Homme
+          {/* Navigation Links */}
+          <nav className="hidden md:flex items-center space-x-8">
+            <Link to="/" className="text-gray-700 hover:text-yellow-500 px-3 py-2 rounded-md text-sm font-medium transition-colors">
+              Accueil
             </Link>
-            <Link
-              to="/category/femme"
-              className="transition-colors font-medium text-black hover:text-yellow-600"
-            >
-              Femme
+            <Link to="/category/collections" className="text-gray-700 hover:text-yellow-500 px-3 py-2 rounded-md text-sm font-medium transition-colors">
+              Collections
             </Link>
-            <Link
-              to="/category/unisexe"
-              className="transition-colors font-medium text-black hover:text-yellow-600"
-            >
-              Unisexe
-            </Link>
-            <Link
-              to="/featured"
-              className="transition-colors font-medium text-black hover:text-yellow-600"
-            >
+            <Link to="/category/nouveautes" className="text-gray-700 hover:text-yellow-500 px-3 py-2 rounded-md text-sm font-medium transition-colors">
               Nouveautés
             </Link>
-          </nav> */}
+            <Link to="/category/meilleures-ventes" className="text-gray-700 hover:text-yellow-500 px-3 py-2 rounded-md text-sm font-medium transition-colors">
+              Meilleures Ventes
+            </Link>
+          </nav>
 
           {/* Espace vide pour aligner les éléments */}
           <div className="flex-1"></div>
@@ -197,43 +185,6 @@ const Header: React.FC = () => {
               )}
             </Link>
 
-            {/* User Menu - Temporarily Disabled
-            {user ? (
-              <div className="relative group">
-                <button className="flex items-center space-x-1 text-gray-700 hover:text-yellow-600 transition-colors">
-                  <User className="h-6 w-6" />
-                  <span className="hidden md:block">{user.full_name}</span>
-                </button>
-                <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200">
-                  <Link to="/profile" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
-                    Mon Profil
-                  </Link>
-                  <Link to="/orders" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
-                    Mes Commandes
-                  </Link>
-                  {(user.role === 'admin' || user.role === 'super_admin') && (
-                    <Link to="/admin" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
-                      Administration
-                    </Link>
-                  )}
-                  <button
-                    onClick={handleSignOut}
-                    className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                  >
-                    Déconnexion
-                  </button>
-                </div>
-              </div>
-            ) : (
-              <Link
-                to="/login"
-                className="bg-yellow-600 text-white px-4 py-2 rounded-lg hover:bg-yellow-700 transition-colors"
-              >
-                Connexion
-              </Link>
-            )}
-            */}
-
             {/* Mobile menu button */}
             <button
               onClick={() => setIsMenuOpen(!isMenuOpen)}
@@ -249,25 +200,32 @@ const Header: React.FC = () => {
           <div className="md:hidden bg-white border-t">
             <div className="px-2 pt-2 pb-3 space-y-1">
               <Link
-                to="/category/homme"
-                className="block px-3 py-2 text-gray-700 hover:bg-gray-100 rounded-md"
+                to="/"
+                className="block px-4 py-2 text-base text-gray-700 hover:bg-gray-100"
                 onClick={() => setIsMenuOpen(false)}
               >
-                Homme
+                Accueil
               </Link>
               <Link
-                to="/category/femme"
-                className="block px-3 py-2 text-gray-700 hover:bg-gray-100 rounded-md"
+                to="/category/collections"
+                className="block px-4 py-2 text-base text-gray-700 hover:bg-gray-100"
                 onClick={() => setIsMenuOpen(false)}
               >
-                Femme
+                Collections
               </Link>
               <Link
-                to="/category/enfant"
-                className="block px-3 py-2 text-gray-700 hover:bg-gray-100 rounded-md"
+                to="/category/nouveautes"
+                className="block px-4 py-2 text-base text-gray-700 hover:bg-gray-100"
                 onClick={() => setIsMenuOpen(false)}
               >
-                Enfant
+                Nouveautés
+              </Link>
+              <Link
+                to="/category/meilleures-ventes"
+                className="block px-4 py-2 text-base text-gray-700 hover:bg-gray-100"
+                onClick={() => setIsMenuOpen(false)}
+              >
+                Meilleures Ventes
               </Link>
             </div>
           </div>

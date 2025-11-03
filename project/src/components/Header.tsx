@@ -1,15 +1,16 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { ShoppingCart, Heart } from 'lucide-react';
 import { useCart } from '../contexts/CartContext';
 import { useFavorites } from '../contexts/FavoritesContext';
+import { motion, useAnimation } from 'framer-motion';
 
 const Header: React.FC = () => {
   const { totalItems } = useCart();
   const { favorites } = useFavorites();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [isRotating, setIsRotating] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
+  const controls = useAnimation();
 
   // Gestion du défilement pour la couleur de la navbar
   React.useEffect(() => {
@@ -21,19 +22,14 @@ const Header: React.FC = () => {
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
-  // Animation de rotation automatique du logo toutes les 5 secondes
-  React.useEffect(() => {
-    const rotateLogo = () => {
-      setIsRotating(true);
-      setTimeout(() => setIsRotating(false), 1000); // Durée de l'animation
+  // Démarrer l'animation 3D automatique
+  useEffect(() => {
+    const startAnimation = async () => {
+      await new Promise(resolve => setTimeout(resolve, 500));
+      controls.start('visible');
     };
-
-    // Démarrer l'animation immédiatement, puis toutes les 5 secondes
-    rotateLogo();
-    const intervalId = setInterval(rotateLogo, 5000);
-
-    return () => clearInterval(intervalId);
-  }, []);
+    startAnimation();
+  }, [controls]);
 
   return (
     <header className={`sticky top-0 z-50 transition-all duration-300 ${isScrolled ? 'bg-white shadow-md' : 'bg-transparent'}`}>
@@ -41,9 +37,103 @@ const Header: React.FC = () => {
         <div className="flex items-center justify-between h-16">
           {/* Logo */}
           <Link to="/" className="flex items-center space-x-2">
-            <div className={`text-2xl font-bold text-black ${isRotating ? 'animate-spin' : ''} transition-transform duration-1000`}>
-              Room<span className="text-yellow-600">.tn</span>
-            </div>
+            <motion.div 
+              className="text-2xl font-bold relative"
+              initial="initial"
+              animate={controls}
+              variants={{
+                initial: { 
+                  rotateY: 0,
+                  scale: 1,
+                },
+                visible: {
+                  rotateY: 360,
+                  transition: { 
+                    rotateY: { 
+                      duration: 6,
+                      ease: 'linear',
+                      repeat: Infinity,
+                      repeatType: 'loop'
+                    }
+                  }
+                }
+              }}
+              style={{
+                transformStyle: 'preserve-3d',
+                perspective: '1000px',
+                transformOrigin: 'center center',
+                display: 'inline-flex',
+                alignItems: 'center',
+                height: '100%',
+                position: 'relative',
+                overflow: 'visible'
+              }}
+            >
+              <div className="flex">
+                {['R', 'o', 'o', 'm'].map((letter, index) => (
+                  <motion.span
+                    key={`letter-${index}`}
+                    className="inline-block"
+                    style={{
+                      transformStyle: 'preserve-3d',
+                      display: 'inline-block',
+                      transform: 'translateZ(10px)',
+                      position: 'relative',
+                      color: 'black'
+                    }}
+                    animate={{
+                      y: [0, -5, 0],
+                      rotateX: [0, 360],
+                      scale: [1, 1.2, 1],
+                      transition: {
+                        duration: 3,
+                        delay: index * 0.1,
+                        repeat: Infinity,
+                        repeatType: 'loop',
+                        ease: 'easeInOut'
+                      }
+                    }}
+                  >
+                    {letter}
+                  </motion.span>
+                ))}
+                <motion.span 
+                  className="text-yellow-600 ml-1"
+                  style={{
+                    display: 'inline-flex',
+                    transform: 'translateZ(15px)',
+                    position: 'relative'
+                  }}
+                  animate={{
+                    y: [0, -3, 0],
+                    scale: [1, 1.1, 1],
+                    transition: {
+                      duration: 2,
+                      repeat: Infinity,
+                      repeatType: 'reverse',
+                      ease: 'easeInOut'
+                    }
+                  }}
+                >
+                  .tn
+                </motion.span>
+              </div>
+              
+              {/* Effet de lueur */}
+              <motion.div 
+                className="absolute inset-0 bg-gradient-to-r from-yellow-400/10 to-transparent"
+                initial={{ opacity: 0 }}
+                animate={{
+                  opacity: [0, 0.2, 0],
+                  left: ['0%', '100%'],
+                  transition: { 
+                    duration: 3, 
+                    repeat: Infinity,
+                    ease: 'easeInOut'
+                  }
+                }}
+              />
+            </motion.div>
           </Link>
 
           {/* Desktop Navigation */}

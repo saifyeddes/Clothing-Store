@@ -76,6 +76,15 @@ const Footer: React.FC = () => {
                 <Mail className="h-5 w-5 text-yellow-600" />
                 <span className="text-gray-300">contact@room.tn</span>
               </li>
+              <li>
+                <Link 
+                  to="/admin" 
+                  className="flex items-center space-x-3 text-gray-300 hover:text-yellow-600 transition-colors"
+                >
+                  <span className="h-5 w-5 text-yellow-600">🔒</span>
+                  <span>Espace Admin</span>
+                </Link>
+              </li>
             </ul>
           </div>
         </div>

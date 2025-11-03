@@ -8,7 +8,6 @@ import { motion, useAnimation } from 'framer-motion';
 const Header: React.FC = () => {
   const { totalItems } = useCart();
   const { favorites } = useFavorites();
-  const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
   const controls = useAnimation();
 
@@ -136,21 +135,8 @@ const Header: React.FC = () => {
             </motion.div>
           </Link>
 
-          {/* Navigation Links */}
-          <nav className="hidden md:flex items-center space-x-8">
-            <Link to="/" className="text-gray-700 hover:text-yellow-500 px-3 py-2 rounded-md text-sm font-medium transition-colors">
-              Accueil
-            </Link>
-            <Link to="/category/collections" className="text-gray-700 hover:text-yellow-500 px-3 py-2 rounded-md text-sm font-medium transition-colors">
-              Collections
-            </Link>
-            <Link to="/category/nouveautes" className="text-gray-700 hover:text-yellow-500 px-3 py-2 rounded-md text-sm font-medium transition-colors">
-              Nouveautés
-            </Link>
-            <Link to="/category/meilleures-ventes" className="text-gray-700 hover:text-yellow-500 px-3 py-2 rounded-md text-sm font-medium transition-colors">
-              Meilleures Ventes
-            </Link>
-          </nav>
+          {/* Espace vide pour aligner les éléments */}
+          <div className="flex-1"></div>
 
           {/* Espace vide pour aligner les éléments */}
           <div className="flex-1"></div>
@@ -185,51 +171,9 @@ const Header: React.FC = () => {
               )}
             </Link>
 
-            {/* Mobile menu button */}
-            <button
-              onClick={() => setIsMenuOpen(!isMenuOpen)}
-              className="md:hidden p-2 text-black transition-colors"
-            >
-              {isMenuOpen ? '✕' : '☰'}
-            </button>
           </div>
         </div>
 
-        {/* Mobile Menu */}
-        {isMenuOpen && (
-          <div className="md:hidden bg-white border-t">
-            <div className="px-2 pt-2 pb-3 space-y-1">
-              <Link
-                to="/"
-                className="block px-4 py-2 text-base text-gray-700 hover:bg-gray-100"
-                onClick={() => setIsMenuOpen(false)}
-              >
-                Accueil
-              </Link>
-              <Link
-                to="/category/collections"
-                className="block px-4 py-2 text-base text-gray-700 hover:bg-gray-100"
-                onClick={() => setIsMenuOpen(false)}
-              >
-                Collections
-              </Link>
-              <Link
-                to="/category/nouveautes"
-                className="block px-4 py-2 text-base text-gray-700 hover:bg-gray-100"
-                onClick={() => setIsMenuOpen(false)}
-              >
-                Nouveautés
-              </Link>
-              <Link
-                to="/category/meilleures-ventes"
-                className="block px-4 py-2 text-base text-gray-700 hover:bg-gray-100"
-                onClick={() => setIsMenuOpen(false)}
-              >
-                Meilleures Ventes
-              </Link>
-            </div>
-          </div>
-        )}
       </div>
     </header>
   );

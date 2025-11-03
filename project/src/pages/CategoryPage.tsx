@@ -9,7 +9,7 @@ import { products as productsApi, ASSETS_BASE } from '../services/api';
 
 const CategoryPage: React.FC = () => {
   const navigate = useNavigate();
-  const { gender } = useParams<{ gender: 'collections' | 'nouveautes' | 'meilleures-ventes' }>();
+  const { gender } = useParams<{ gender: 'collections' | 'nouveautes' | 'meilleures-ventes' | 'all' }>();
   const [searchParams] = useSearchParams();
   const searchQuery = searchParams.get('search')?.toLowerCase() || '';
   
@@ -83,7 +83,7 @@ const CategoryPage: React.FC = () => {
       try {
         // Optionally can pass query params, but backend filtering by category happens with ?category=...
         const params: Record<string, string> = {};
-        if (gender) {
+        if (gender && gender !== 'all') {
           // Mapper les nouvelles catégories aux anciennes pour la rétrocompatibilité
           const categoryMap: Record<string, string> = {
             'collections': 'unisexe',
@@ -126,9 +126,15 @@ const CategoryPage: React.FC = () => {
   const filteredProducts = useMemo(() => {
     return fetchedProducts.filter((product: Product) => {
       // Filtre par catégorie
-      if (gender === 'collections' && product.category_id !== 'unisexe') return false;
-      if (gender === 'nouveautes' && !product.category_id.includes('new')) return false;
-      if (gender === 'meilleures-ventes' && !product.is_featured) return false;
+      if (gender === 'all') {
+        // Si 'all', on affiche tous les produits
+      } else if (gender === 'collections' && product.category_id !== 'unisexe') {
+        return false;
+      } else if (gender === 'nouveautes' && !product.category_id.includes('new')) {
+        return false;
+      } else if (gender === 'meilleures-ventes' && !product.is_featured) {
+        return false;
+      }
       
       // Filtre par recherche
       if (searchQuery) {

@@ -241,6 +241,8 @@ const ProductDetail: React.FC = () => {
       return;
     }
     addToCart(product, selectedSize, selectedColor, quantity);
+    // Rediriger vers le panier après l'ajout
+    navigate('/cart');
   };
 
   const getColorStyle = (color: string) => {

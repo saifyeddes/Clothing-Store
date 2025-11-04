@@ -325,15 +325,15 @@ const CategoryPage: React.FC = () => {
                 id="sort"
                 value={sortOption}
                 onChange={(e) => setSortOption(e.target.value)}
-                className="block w-full pl-4 pr-10 py-2.5 text-sm text-gray-700 bg-white border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500"
+                className="appearance-none block w-full pl-4 pr-10 py-2.5 text-sm text-gray-700 bg-white border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-400 focus:border-yellow-400 hover:border-gray-300 transition-colors cursor-pointer"
               >
-                <option value="name-asc">Trier par : Nom (A-Z)</option>
-                <option value="name-desc">Trier par : Nom (Z-A)</option>
-                <option value="price-asc">Trier par : Prix croissant</option>
-                <option value="price-desc">Trier par : Prix décroissant</option>
+                <option value="name-asc">Nom (A-Z)</option>
+                <option value="name-desc">Nom (Z-A)</option>
+                <option value="price-asc">Prix croissant</option>
+                <option value="price-desc">Prix décroissant</option>
               </select>
               <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
-                <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <svg className="w-4 h-4 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                 </svg>
               </div>

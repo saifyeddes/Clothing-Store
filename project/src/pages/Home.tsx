@@ -292,28 +292,150 @@ const Home: React.FC = () => {
             </p>
           </div>
 
-          <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 mb-12">
-            {featuredProducts.map((product) => (
-              <ProductCard
-                key={product.id}
-                product={product}
-                onAddToCart={handleQuickAddToCart}
-              />
-            ))}
+          <div className="relative">
+            <div className="flex overflow-x-auto pb-6 -mx-2 px-2">
+              <div className="flex space-x-6">
+                {featuredProducts.map((product) => (
+                  <div key={product.id} className="flex-shrink-0 w-64">
+                    <ProductCard
+                      product={product}
+                      onAddToCart={handleQuickAddToCart}
+                    />
+                  </div>
+                ))}
+              </div>
+            </div>
+            
+            <div className="absolute right-0 top-0 bottom-0 w-16 bg-gradient-to-l from-white to-transparent pointer-events-none"></div>
+            <div className="absolute left-0 top-0 bottom-0 w-16 bg-gradient-to-r from-white to-transparent pointer-events-none"></div>
           </div>
 
-          <div className="text-center">
+          {/* Bouton Voir tous les t-shirts */}
+          <div className="text-center mt-12">
             <Link
               to="/category/all"
-              className="inline-flex items-center bg-yellow-600 text-white px-8 py-3 rounded-lg text-lg font-semibold hover:bg-yellow-700 transition-colors"
+              className="inline-flex items-center bg-yellow-600 text-white px-8 py-3 rounded-lg text-lg font-semibold hover:bg-yellow-700 transition-colors mb-12"
             >
               Voir tous les t-shirts
               <ArrowRight className="ml-2 h-5 w-5" />
             </Link>
           </div>
+
+          {/* Définition de la marque - Version Mobile First */}
+          <div className="relative max-w-6xl mx-auto px-4 sm:px-6 py-12 sm:py-16 lg:py-20">
+            {/* Fond décoratif amélioré */}
+            <div className="absolute inset-0 -z-10 overflow-hidden rounded-3xl mx-4 sm:mx-6">
+              <div className="absolute inset-0 bg-gradient-to-br from-yellow-50 via-white to-yellow-50 opacity-90"></div>
+              <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-5"></div>
+              <div className="absolute -right-20 -top-20 w-64 h-64 bg-yellow-100 rounded-full filter blur-3xl opacity-40"></div>
+              <div className="absolute -left-20 -bottom-20 w-64 h-64 bg-yellow-100 rounded-full filter blur-3xl opacity-40"></div>
+            </div>
+            
+            <div className="text-center mb-12 sm:mb-16 px-2">
+              <motion.h3 
+                className="text-3xl sm:text-4xl md:text-5xl font-bold text-gray-900 mb-4 sm:mb-6"
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.6 }}
+              >
+                <span className="relative inline-block">
+                  <span className="relative z-10 px-2">
+                    <span className="bg-gradient-to-r from-yellow-600 to-yellow-400 bg-clip-text text-transparent">Room</span>
+                    <span className="text-gray-900">.tn</span>
+                  </span>
+                  <span className="absolute -bottom-1 left-0 w-full h-2 bg-yellow-100 -z-0 rounded-full"></span>
+                </span>
+              </motion.h3>
+              
+              <motion.p 
+                className="text-lg sm:text-xl text-gray-600 max-w-3xl mx-auto leading-relaxed px-2"
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.6, delay: 0.1 }}
+              >
+                L'élégance intemporelle à travers des pièces unisexes qui transcendent les tendances éphémères.
+              </motion.p>
+            </div>
+            
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8 px-2 sm:px-0">
+              {[
+                {
+                  icon: '👔',
+                  title: 'Style Universel',
+                  description: 'Des designs pensés pour toutes les silhouettes et tous les styles de vie, alliant élégance et confort.',
+                  color: 'from-yellow-50 to-yellow-100'
+                },
+                {
+                  icon: '✨',
+                  title: 'Qualité Supérieure',
+                  description: 'Matières nobles sélectionnées pour un confort inégalé et une durabilité exceptionnelle.',
+                  color: 'from-amber-50 to-amber-100'
+                },
+                {
+                  icon: '🌿',
+                  title: 'Éthique & Durable',
+                  description: 'Engagement pour une mode responsable, respectueuse des artisans et de la planète.',
+                  color: 'from-green-50 to-green-100'
+                }
+              ].map((item, index) => (
+                <motion.div 
+                  key={index}
+                  className={`group relative p-6 sm:p-8 rounded-2xl shadow-sm hover:shadow-lg transition-all duration-300 overflow-hidden bg-gradient-to-br ${item.color} hover:shadow-yellow-100/50`}
+                  initial={{ opacity: 0, y: 20 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true, margin: "-50px" }}
+                  transition={{ 
+                    duration: 0.5, 
+                    delay: 0.1 * index,
+                    type: "spring",
+                    stiffness: 100
+                  }}
+                  whileHover={{ y: -5, scale: 1.02 }}
+                >
+                  <div className="relative z-10">
+                    <div className={`w-16 h-16 sm:w-20 sm:h-20 mx-auto mb-4 sm:mb-6 rounded-2xl bg-white/80 backdrop-blur-sm flex items-center justify-center text-3xl shadow-inner group-hover:scale-110 transition-transform duration-300`}>
+                      {item.icon}
+                    </div>
+                    <h4 className="text-lg sm:text-xl font-semibold text-gray-900 mb-2 sm:mb-3">{item.title}</h4>
+                    <p className="text-sm sm:text-base text-gray-600 leading-relaxed">{item.description}</p>
+                    
+                    <div className="mt-4 sm:mt-6 opacity-0 group-hover:opacity-100 transition-opacity duration-500">
+                      <div className="w-8 h-0.5 bg-yellow-400 mx-auto transform group-hover:scale-x-150 transition-transform duration-300"></div>
+                    </div>
+                  </div>
+                </motion.div>
+              ))}
+            </div>
+            
+            <motion.div 
+              className="mt-12 sm:mt-16 text-center px-4 py-6 bg-white/50 backdrop-blur-sm rounded-2xl shadow-inner max-w-2xl mx-auto"
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true, margin: "-50px" }}
+              transition={{ 
+                duration: 0.6, 
+                delay: 0.3,
+                type: "spring",
+                stiffness: 100
+              }}
+            >
+              <svg 
+                className="w-8 h-8 text-yellow-400 mx-auto mb-3 opacity-70" 
+                fill="currentColor" 
+                viewBox="0 0 24 24"
+              >
+                <path d="M14.017 21v-7.391c0-5.704 3.731-9.57 8.983-10.609l.995 2.151c-2.432.917-3.995 3.638-3.995 5.849h4v10h-9.983zm-14.017 0v-7.391c0-5.704 3.748-9.57 9-10.609l.996 2.151c-2.433.917-3.996 3.638-3.996 5.849h3.983v10h-9.983z" />
+              </svg>
+              <p className="text-base sm:text-lg text-gray-600 italic font-medium">
+                « L'élégance est la seule beauté qui ne se fane jamais. »
+              </p>
+              <p className="mt-2 text-sm sm:text-base text-yellow-600 font-medium">- Audrey Hepburn</p>
+            </motion.div>
+          </div>
         </div>
       </section>
-
     </div>
   );
 };

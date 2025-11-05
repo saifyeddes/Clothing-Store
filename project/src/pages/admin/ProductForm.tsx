@@ -118,111 +118,195 @@ const ProductForm: React.FC<ProductFormProps> = ({ product, onSubmit, onClose })
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    // Build multipart FormData matching backend API
+    
+    // Validation des champs requis
+    if (!formData.name.trim()) {
+      alert('Veuillez saisir un nom pour le produit');
+      return;
+    }
+    
+    if (formData.price <= 0) {
+      alert('Le prix doit être supérieur à 0');
+      return;
+    }
+    
+    if (!formData.description.trim()) {
+      alert('Veuillez saisir une description pour le produit');
+      return;
+    }
+    
+    if (formData.images.length === 0) {
+      alert('Veuillez ajouter au moins une image');
+      return;
+    }
+    
+    const colorsArr = (formData.colors || []).filter(Boolean);
+    if (colorsArr.length === 0) {
+      alert('Veuillez ajouter au moins une couleur');
+      return;
+    }
+    
+    const sizesClean = (formData.sizes || []).filter(Boolean);
+    if (sizesClean.length === 0) {
+      alert('Veuillez ajouter au moins une taille');
+      return;
+    }
+    
+    if (formData.stock_quantity < 0) {
+      alert('La quantité en stock ne peut pas être négative');
+      return;
+    }
+    
+    // Si tout est valide, on envoie les données
     const data = new FormData();
     data.append('name', formData.name.trim());
     data.append('description', formData.description.trim());
-    const price = isNaN(Number(formData.price)) ? 0 : Number(formData.price);
-    data.append('price', String(price));
-    // Category removed (optional)
-    // colors as array of objects, convert from strings
-    const colorsArr = (formData.colors || []).filter(Boolean).map((c) => ({ name: c, code: c }));
-    data.append('colors', JSON.stringify(colorsArr));
-    // sizes as array of strings
-    const allowedSizes = ['XS','S','M','L','XL','XXL'];
-    const sizesClean = (formData.sizes || []).filter((s) => !!s && allowedSizes.includes(s));
+    data.append('price', String(Number(formData.price).toFixed(3)));
+    data.append('colors', JSON.stringify(colorsArr.map(c => ({
+      name: c,
+      code: c.startsWith('#') ? c : `#${Math.floor(Math.random()*16777215).toString(16)}`
+    }))));
     data.append('sizes', JSON.stringify(sizesClean));
-    const stock = Number.isFinite(Number(formData.stock_quantity)) ? parseInt(String(formData.stock_quantity), 10) : 0;
-    data.append('stock', String(stock));
+    data.append('stock', String(Math.floor(formData.stock_quantity)));
     data.append('is_new', 'true');
-    // Append image files only (ignore existing URLs)
-    (formData.images || []).forEach((img) => {
+    
+    // Ajout des images
+    formData.images.forEach((img) => {
       if (img instanceof File) {
         data.append('images', img);
       }
     });
+    
     onSubmit(data);
   };
 
+  const handleFormSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    handleSubmit(e);
+  };
+
   return (
-    <form onSubmit={handleSubmit} className="space-y-6">
-      {/* Infos principales */}
-      <div className="bg-white rounded-2xl shadow-sm ring-1 ring-gray-100 p-4 sm:p-6">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div>
-            <label htmlFor="name" className="block text-sm font-medium text-gray-700">Nom du produit</label>
-            <input type="text" name="name" id="name" value={formData.name} onChange={handleChange} className="mt-1 block w-full border border-gray-300 rounded-xl shadow-sm py-2.5 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500" required />
-          </div>
-          <div>
-            <label htmlFor="price" className="block text-sm font-medium text-gray-700">Prix</label>
-            <input type="number" name="price" id="price" value={formData.price} onChange={handleChange} className="mt-1 block w-full border border-gray-300 rounded-xl shadow-sm py-2.5 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500" required />
-          </div>
-        </div>
-        <div className="mt-4">
-          <label htmlFor="description" className="block text-sm font-medium text-gray-700">Description</label>
-          <textarea name="description" id="description" value={formData.description} onChange={handleChange} rows={4} className="mt-1 block w-full border border-gray-300 rounded-xl shadow-sm py-2.5 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500" required />
-        </div>
-      </div>
-
-      {/* Catégorie et Genre supprimés selon la demande */}
-
-      {/* Médias */}
-      <div className="bg-white rounded-2xl shadow-sm ring-1 ring-gray-100 p-4 sm:p-6">
-        <label className="block text-sm font-medium text-gray-700 mb-1">Images</label>
-        <div className="mt-2 p-4 border-2 border-dashed border-gray-300 rounded-xl">
+    <form onSubmit={handleFormSubmit} className="space-y-5">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+        <div className="space-y-1">
+          <label htmlFor="name" className="block text-sm font-medium text-gray-700">
+            Nom <span className="text-red-500">*</span>
+          </label>
           <input
-            type="file"
-            multiple
-            accept="image/*"
-            onChange={handleImageChange}
-            className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+            type="text"
+            id="name"
+            name="name"
+            value={formData.name}
+            onChange={handleChange}
+            className="block w-full rounded-lg border-gray-300 shadow-sm text-sm focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 p-2 border"
+            placeholder="Ex: T-shirt en coton"
+            required
           />
-          {imagePreviews.length > 0 && (
-            <div className="mt-4 grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-4">
-              {imagePreviews.map((preview, index) => (
-                <div key={index} className="relative group">
-                  <img src={preview} alt={`Aperçu ${index + 1}`} className="h-24 w-24 object-cover rounded-md shadow-md" />
-                  <button
-                    type="button"
-                    onClick={() => removeImage(index)}
-                    className="absolute top-0 right-0 -mt-2 -mr-2 bg-red-500 text-white rounded-full h-6 w-6 flex items-center justify-center text-xs opacity-0 group-hover:opacity-100 transition-opacity"
-                  >
-                    &times;
-                  </button>
-                </div>
-              ))}
+        </div>
+        <div className="space-y-1">
+          <label htmlFor="price" className="block text-sm font-medium text-gray-700">
+            Prix
+          </label>
+          <input
+            type="number"
+            id="price"
+            name="price"
+            value={formData.price}
+            onChange={handleChange}
+            min="0"
+            step="0.01"
+            className="block w-full rounded-lg border-gray-300 shadow-sm text-sm focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 p-2 border"
+            placeholder="Ex: 29.990"
+            required
+          />
+        </div>
+      </div>
+      <div className="space-y-1">
+        <label htmlFor="description" className="block text-sm font-medium text-gray-700">
+          Description <span className="text-red-500">*</span>
+        </label>
+        <textarea
+          id="description"
+          name="description"
+          rows={2}
+          value={formData.description}
+          onChange={handleChange}
+          className="block w-full rounded-lg border-gray-300 shadow-sm text-sm focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 p-2 border"
+          placeholder="Décrivez le produit en détail..."
+          required
+        />
+      </div>
+
+      <div className="space-y-1">
+        <label className="block text-sm font-medium text-gray-700 mb-1">
+          Images <span className="text-red-500">*</span>
+        </label>
+        <div className="flex flex-wrap gap-2">
+          {imagePreviews.map((preview, index) => (
+            <div key={index} className="relative group">
+              <img
+                src={preview}
+                alt={`Preview ${index}`}
+                className="h-16 w-16 object-cover rounded-lg border border-gray-200"
+              />
+              <button
+                type="button"
+                onClick={() => removeImage(index)}
+                className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-0.5 hover:bg-red-600 transition-colors"
+              >
+                <XIcon className="h-3 w-3" />
+              </button>
             </div>
-          )}
+          ))}
+          <label className="flex h-16 w-16 items-center justify-center rounded-lg border-2 border-dashed border-gray-300 cursor-pointer hover:border-indigo-500 transition-colors">
+            <input
+              type="file"
+              className="hidden"
+              accept="image/*"
+              multiple
+              onChange={handleImageChange}
+            />
+            <span className="text-gray-400 text-xl">+</span>
+          </label>
         </div>
       </div>
 
-      {/* Variantes */}
-      <div className="bg-white rounded-2xl shadow-sm ring-1 ring-gray-100 p-4 sm:p-6">
-        <h3 className="text-sm font-semibold text-gray-900 mb-3">Variantes</h3>
-        <label className="block text-sm font-medium text-gray-700">Tailles</label>
-        {formData.sizes.map((size, index) => (
-          <div key={index} className="flex items-center mt-1">
-            <select
-              value={size}
-              onChange={(e) => handleArrayChange(index, e.target.value, 'sizes')}
-              className="block w-full border border-gray-300 rounded-xl shadow-sm py-2.5 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
-            >
-              <option value="">Sélectionner une taille</option>
-              {['XS','S','M','L','XL','XXL'].map(opt => (
-                <option key={opt} value={opt}>{opt}</option>
-              ))}
-            </select>
-            <button type="button" onClick={() => removeArrayItem(index, 'sizes')} className="ml-2 text-red-600 hover:text-red-800" aria-label="Supprimer">
-              <XIcon className="h-5 w-5" />
-            </button>
-          </div>
-        ))}
-        <button type="button" onClick={() => addArrayItem('sizes')} className="mt-2 text-sm text-indigo-600 hover:text-indigo-800">Ajouter taille</button>
+      <div className="space-y-1">
+        <label className="block text-sm font-medium text-gray-700">Tailles <span className="text-red-500">*</span></label>
+        <div className="space-y-2">
+          {formData.sizes.map((size, index) => (
+            <div key={index} className="flex gap-2">
+              <input
+                type="text"
+                value={size}
+                onChange={(e) => handleArrayChange(index, e.target.value, 'sizes')}
+                className="block w-full rounded-lg border-gray-300 shadow-sm text-sm focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 p-2 border"
+                placeholder="Ex: S, M, L..."
+              />
+              <button
+                type="button"
+                onClick={() => removeArrayItem(index, 'sizes')}
+                className="px-2.5 py-1 text-xs font-medium text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+              >
+                <XIcon className="h-4 w-4" />
+              </button>
+            </div>
+          ))}
+          <button
+            type="button"
+            onClick={() => addArrayItem('sizes')}
+            className="text-xs text-indigo-600 hover:text-indigo-800 font-medium flex items-center gap-1 mt-1"
+          >
+            <span>+</span> Ajouter une taille
+          </button>
+        </div>
+      </div>
 
-        <div className="mt-4">
-          <label className="block text-sm font-medium text-gray-700">Couleurs</label>
+      <div className="space-y-1">
+        <label className="block text-sm font-medium text-gray-700">Couleurs <span className="text-red-500">*</span></label>
+        <div className="space-y-2">
           {formData.colors.map((color, index) => (
-            <div key={index} className="flex items-center mt-1">
+            <div key={index} className="flex gap-2">
               <input
                 type="color"
                 value={/^#/.test(color) ? color : '#000000'}
@@ -234,27 +318,60 @@ const ProductForm: React.FC<ProductFormProps> = ({ product, onSubmit, onClose })
                 type="text"
                 value={color}
                 onChange={(e) => handleArrayChange(index, e.target.value, 'colors')}
-                className="ml-2 block w-full border border-gray-300 rounded-xl shadow-sm py-2.5 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+                className="ml-2 block w-full rounded-lg border-gray-300 shadow-sm text-sm focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 p-2 border"
                 placeholder="#000000 ou nom"
               />
-              <button type="button" onClick={() => removeArrayItem(index, 'colors')} className="ml-2 text-red-600 hover:text-red-800" aria-label="Supprimer">
-                <XIcon className="h-5 w-5" />
+              <button
+                type="button"
+                onClick={() => removeArrayItem(index, 'colors')}
+                className="px-2.5 py-1 text-xs font-medium text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+              >
+                <XIcon className="h-4 w-4" />
               </button>
             </div>
           ))}
-          <button type="button" onClick={() => addArrayItem('colors')} className="mt-2 text-sm text-indigo-600 hover:text-indigo-800">Ajouter couleur</button>
+          <button
+            type="button"
+            onClick={() => addArrayItem('colors')}
+            className="text-xs text-indigo-600 hover:text-indigo-800 font-medium flex items-center gap-1 mt-1"
+          >
+            <span>+</span> Ajouter une couleur
+          </button>
         </div>
       </div>
 
-      {/* Stock */}
-      <div className="bg-white rounded-2xl shadow-sm ring-1 ring-gray-100 p-4 sm:p-6">
-        <label htmlFor="stock_quantity" className="block text-sm font-medium text-gray-700">Quantité en stock</label>
-        <input type="number" name="stock_quantity" id="stock_quantity" value={formData.stock_quantity} onChange={handleChange} className="mt-1 block w-full border border-gray-300 rounded-xl shadow-sm py-2.5 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500" />
+      <div className="space-y-1">
+        <label htmlFor="stock_quantity" className="block text-sm font-medium text-gray-700">
+          Quantité en stock <span className="text-red-500">*</span>
+        </label>
+        <input
+          type="number"
+          id="stock_quantity"
+          name="stock_quantity"
+          value={formData.stock_quantity}
+          onChange={handleChange}
+          min="0"
+          step="1"
+          className="block w-full rounded-lg border-gray-300 shadow-sm text-sm focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 p-2 border"
+          placeholder="Ex: 50"
+          required
+        />
       </div>
 
-      <div className="flex justify-end space-x-3">
-        <button type="button" onClick={onClose} className="bg-gray-100 text-gray-800 px-4 py-2 rounded-xl hover:bg-gray-200 ring-1 ring-gray-200">Annuler</button>
-        <button type="submit" className="bg-indigo-600 text-white px-4 py-2 rounded-xl hover:bg-indigo-700 shadow-sm">{product ? 'Mettre à jour' : 'Créer'}</button>
+      <div className="flex justify-end gap-3 pt-4 border-t border-gray-100 mt-6">
+        <button
+          type="button"
+          onClick={onClose}
+          className="px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 rounded-lg transition-colors"
+        >
+          Annuler
+        </button>
+        <button
+          type="submit"
+          className="px-4 py-2 text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 rounded-lg transition-colors focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+        >
+          {product ? 'Mettre à jour' : 'Créer le produit'}
+        </button>
       </div>
     </form>
   );

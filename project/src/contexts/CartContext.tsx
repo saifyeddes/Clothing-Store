@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import type { CartItem, Product } from '../types';
+import { showToast } from '../components/ToastNotification';
 
 interface CartContextType {
   items: CartItem[];
@@ -42,6 +43,7 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     if (existingItem) {
       updateQuantity(existingItem.id, existingItem.quantity + quantity);
+      showToast(`Quantité mise à jour pour ${product.name}`, 'success');
     } else {
       const newItem: CartItem = {
         id: `${product.id}-${size.replace(/\s+/g, '')}-${color.replace(/\s+/g, '')}-${Date.now()}`,
@@ -52,6 +54,7 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
         quantity,
       };
       setItems(prev => [...prev, newItem]);
+      showToast(`Produit ajouté au panier : ${product.name}`, 'success');
     }
   };
 

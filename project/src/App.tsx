@@ -18,7 +18,6 @@ import AdminDashboard from './pages/admin/AdminDashboard';
 import ProductManagement from './pages/admin/ProductManagement';
 import OrderManagement from './pages/admin/OrderManagement';
 import UserManagement from './pages/admin/UserManagement';
-import ReviewManagement from './pages/admin/ReviewManagement';
 import ProtectedRoute from './components/ProtectedRoute';
 
 function App() {
@@ -51,7 +50,6 @@ function App() {
                   <Route path="/admin/products" element={<ProductManagement />} />
                   <Route path="/admin/orders" element={<OrderManagement />} />
                   <Route path="/admin/users" element={<UserManagement />} />
-                  <Route path="/admin/reviews" element={<ReviewManagement />} />
                 </Route>
               </Route>
             </Routes>

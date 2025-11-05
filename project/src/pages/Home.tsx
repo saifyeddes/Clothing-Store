@@ -6,6 +6,7 @@ import ProductCard from '../components/ProductCard';
 import { useCart } from '../contexts/CartContext';
 import type { Product } from '../types';
 import { products as productsApi, ASSETS_BASE } from '../services/api';
+import Footer from '../components/Footer';
 
 // 10 high-quality fashion images for the carousel
 const heroImages = [
@@ -436,6 +437,7 @@ const Home: React.FC = () => {
           </div>
         </div>
       </section>
+      <Footer />
     </div>
   );
 };

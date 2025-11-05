@@ -81,6 +81,10 @@ export const orders = {
     const res = await api.get(`/orders/${id}/pdf`, { responseType: 'blob' });
     return res.data as Blob;
   },
+  delete: async (id: string) => {
+    const res = await api.delete(`/orders/${id}`);
+    return res.data;
+  },
 };
 
 export const products = {

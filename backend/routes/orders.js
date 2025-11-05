@@ -12,5 +12,6 @@ router.get('/', ctrl.list);
 router.post('/:id/approve', ctrl.approve);
 router.post('/:id/reject', ctrl.reject);
 router.get('/:id/pdf', ctrl.pdf);
+router.delete('/:id', ctrl.delete);
 
 module.exports = router;

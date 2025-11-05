@@ -141,3 +141,18 @@ exports.pdf = async (req, res) => {
     res.status(500).json({ message: 'Erreur du serveur' });
   }
 };
+
+// DELETE /api/orders/:id
+exports.delete = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const order = await Order.findByIdAndDelete(id);
+    if (!order) {
+      return res.status(404).json({ message: 'Commande introuvable' });
+    }
+    res.json({ message: 'Commande supprimée avec succès' });
+  } catch (err) {
+    console.error('orders.delete error', err);
+    res.status(500).json({ message: 'Erreur lors de la suppression de la commande' });
+  }
+};

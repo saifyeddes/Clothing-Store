@@ -6,6 +6,7 @@ import ProductForm from './ProductForm';
 import { products as productsApi } from '../../services/api';
 import { motion, AnimatePresence } from 'framer-motion';
 import type { FormData } from 'formdata-node';
+import { API_BASE_URL } from '../../config/api';
 
 const ProductManagement: React.FC = () => {
   const [products, setProducts] = useState<Product[]>([]);
@@ -13,7 +14,7 @@ const ProductManagement: React.FC = () => {
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState<{show: boolean, productId: string | null}>({ show: false, productId: null });
 
-  const API_HOST = 'http://localhost:5000';
+  const API_HOST = API_BASE_URL.replace('/api', '');
 
   const mapFromBackend = React.useCallback((p: BackendProduct): Product => {
     // Vérifier et formater les images

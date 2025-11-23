@@ -2,12 +2,15 @@ services:
   - type: web
     name: roomtn-backend
     env: node
+    rootDirectory: backend
     buildCommand: npm install
     startCommand: node server.js
     envVars:
       - key: NODE_ENV
         value: production
       - key: MONGODB_URI
-        fromDatabase:
-          name: roomtn-db
-          property: connectionString
+        value: mongodb+srv://saifyedes20:Sayfountahfoun2001@cluster0.iupdulh.mongodb.net/roomtn?retryWrites=true&w=majority&appName=Cluster0
+      - key: JWT_SECRET
+        generateValue: true
+      - key: PORT
+        value: 10000

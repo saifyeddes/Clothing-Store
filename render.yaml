@@ -2,8 +2,10 @@ services:
   - type: web
     name: roomtn-backend
     env: node
-    buildCommand: npm install
-    startCommand: node server.js
+    buildCommand: cd backend && npm install
+    startCommand: cd backend && node server.js
+    autoDeploy: true
+    region: frankfurt
     envVars:
       - key: NODE_ENV
         value: production
@@ -15,3 +17,6 @@ services:
         value: 10000
       - key: FRONTEND_URL
         value: https://roomtn.netlify.app
+    healthCheckPath: /
+    runtime: node
+    plan: free
